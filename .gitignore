@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.pnpm-store/
+.pnpm-debug.log*
+
+.env
+.env.local
+.avia/
+
+bin/
+obj/
+*.user
+
+.vscode/
+.idea/
+.DS_Store

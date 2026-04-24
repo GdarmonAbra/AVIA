@@ -1,0 +1,6 @@
+packages:
+  - "packages/shared-types"
+  - "packages/orchestrator"
+  - "packages/agents/*"
+  - "packages/cli"
+  - "packages/vscode-extension"

@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_live_smoke:
+        description: "Run live Azure DevOps MCP smoke test"
+        required: false
+        default: "false"
+
+jobs:
+  ts:
+    name: TypeScript build + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm -r run build
+      - run: pnpm -r run test
+      - run: pnpm -r run lint
+
+  live-smoke:
+    name: Live MCP smoke (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_smoke == 'true'
+    runs-on: ubuntu-latest
+    needs: [ts]
+    env:
+      ADO_ORG: ${{ secrets.ADO_ORG }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm -r run build
+      # Resolves and connects the azure-devops MCP end-to-end. Requires a
+      # configured Entra device login in the runner's keychain.
+      - run: pnpm --filter @avia/agents-summary start -- --work-item=${{ secrets.ADO_SMOKE_WORK_ITEM }}
