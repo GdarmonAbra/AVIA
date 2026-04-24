@@ -2,5 +2,4 @@ packages:
   - "packages/shared-types"
   - "packages/orchestrator"
   - "packages/agents/*"
-  - "packages/mcp-servers/*"
   - "packages/vscode-extension"

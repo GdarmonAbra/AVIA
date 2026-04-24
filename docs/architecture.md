@@ -1,6 +1,6 @@
 # AVIA Architecture
 
-AVIA ("AI Virtual Implementation Assistant") is a multi-agent system that takes an Azure DevOps work item and drives it through summarization → design → implementation → live testing against a Dynamics 365 Finance & Operations environment. Every LLM call goes through the Anthropic Claude API.
+AVIA ("AI Virtual Implementation Assistant") is a multi-agent system that takes an Azure DevOps work item and drives it through summarization → design → implementation → live testing against a Dynamics 365 Finance & Operations environment. Every LLM call goes through the Anthropic Claude API. Every F&O / ADO interaction goes through an **existing** MCP server — AVIA does not ship its own.
 
 ## High-level flow
 
@@ -31,34 +31,30 @@ States (see `packages/orchestrator/src/router.ts`):
 - `testing` (loops back to `developing` on test failure, bounded by `maxDevTestLoops`) → `passed` | `failed`
 - `done` | `aborted`
 
-Transitions are pure reducer calls. Side-effects (spawning an agent, writing to the task store) are handled in an outer runner so the reducer is unit-testable.
+Transitions are pure reducer calls. Side effects (spawning an agent, writing to the task store) are handled in an outer runner so the reducer is unit-testable.
 
-## Why four agents instead of one
+## Agents
 
-Each role needs a different system prompt, tool set, and — critically — a different trust level for destructive operations:
+Each role needs a different system prompt, tool set, and trust level:
 
-| Agent      | Writes code? | Writes to live F&O? | Model (default)         |
+| Agent      | Writes code? | Writes to live F&O? | Model (default)      |
 |------------|:---:|:---:|---|
-| Summary    | no  | no  | `claude-opus-4-7`       |
-| Architect  | no  | no  | `claude-opus-4-7`       |
+| Summary    | no  | no  | `claude-opus-4-7`    |
+| Architect  | no  | no  | `claude-opus-4-7`    |
 | Developer  | yes | no  | `claude-sonnet-4-6` (fast, it will loop) |
-| Tester     | no  | yes (test data only) | `claude-sonnet-4-6` |
+| Tester     | no  | yes (test data only) | `claude-sonnet-4-6` (Microsoft recommends Sonnet 4.5 with the ERP MCP; 4.6 is the current-gen equivalent) |
 
 Prompt caching is applied to the system prompt + tool list, so the Developer's compile-fix loop stays cheap.
 
 ## MCP boundary
 
-Agents never call F&O, ADO, or `.NET` directly. They talk to three MCP servers over stdio:
+Agents never call F&O, ADO, or the D365 metadata tools directly. They talk to existing MCP servers listed in `mcp-clients/mcp.json`. `packages/agents/shared/src/mcpRegistry.ts` loads that file, spawns (or opens HTTP connections to) the servers, and adapts each server's tools into `AgentToolDef`s. Tool names are namespaced `${server}__${tool}` to avoid collisions.
 
-- `xpp` — read/write X++ metadata, compile, deploy. Shells out to `dotnet avia-xpp`.
-- `d365-runtime` — OData + Metadata Service against a live F&O environment.
-- `azure-devops` — work items, PRs, pipelines.
-
-This keeps the agents portable (any MCP client can drive them — VS Code, Claude Desktop, our own extension, CI) and keeps auth/secrets contained in the MCP server processes.
+See `docs/mcp-contracts.md` for the exact server list and which agents bind to which servers.
 
 ## Human-in-the-loop
 
-The Architect's `DesignProposal` is never auto-approved. The VS Code extension renders it and blocks the orchestrator on `awaiting_user_approval`. This is the single most important safety gate: once the Developer is unblocked, it will compile and deploy without further prompts until the Tester reports.
+The Architect's `DesignProposal` is never auto-approved. The VS Code extension renders it and blocks the orchestrator on `awaiting_user_approval`. Once the Developer is unblocked it will compile and deploy without further prompts, so this is the single most important safety gate.
 
 ## Resumability
 
@@ -66,11 +62,9 @@ The Architect's `DesignProposal` is never auto-approved. The VS Code extension r
 
 ## File map (load-bearing)
 
+- `mcp-clients/mcp.json` — external MCP server launch specs
+- `packages/agents/shared/src/mcpClient.ts` — stdio + streamable-http MCP client with Entra client-credentials auth for the ERP MCP
+- `packages/agents/shared/src/mcpRegistry.ts` — load mcp.json, lazy-connect, list+adapt tools
+- `packages/agents/shared/src/harness.ts` — Claude tool-use loop with prompt caching
 - `packages/orchestrator/src/router.ts` — state machine
 - `packages/orchestrator/src/taskStore.ts` — persistence
-- `packages/agents/shared/src/harness.ts` — `runAgent(systemPrompt, tools, input)`
-- `packages/agents/shared/src/claude.ts` — Anthropic client + tool-use loop + prompt caching
-- `packages/mcp-servers/xpp/src/server.ts` — `xpp_*` tools, spawns `dotnet avia-xpp`
-- `packages/mcp-servers/d365-runtime/src/server.ts` — `d365_*` tools
-- `packages/mcp-servers/azure-devops/src/server.ts` — `ado_*` tools
-- `src/Avia.Xpp.Cli/Program.cs` — .NET bridge entry point

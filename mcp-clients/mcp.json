@@ -1,0 +1,57 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/mcp.json",
+  "_comment": "External MCP servers AVIA launches. The agents/shared McpRegistry consumes this file. Copy env values from .env.example; fields prefixed with ${ENV} are expanded at load time.",
+  "mcpServers": {
+    "xpp-author": {
+      "_about": "ccampora/mcp_xpp — write-capable X++ authoring via VS2022 service. Requires Windows + VS2022 + D365 dev tools (your UDE box).",
+      "_homepage": "https://github.com/ccampora/mcp_xpp",
+      "type": "stdio",
+      "command": "node",
+      "args": ["${MCP_XPP_PATH}/build/index.js"],
+      "env": {
+        "D365_METADATA_PATH": "${AVIA_D365_METADATA_PATH}"
+      }
+    },
+    "d365fo-nav": {
+      "_about": "dynamics365ninja/d365fo-mcp-server — 54 tools for read/navigate over ~584k indexed X++ symbols, plus local AxTable/AxForm mutations.",
+      "_homepage": "https://github.com/dynamics365ninja/d365fo-mcp-server",
+      "type": "stdio",
+      "command": "node",
+      "args": ["${MCP_D365FO_NAV_PATH}/build/index.js"],
+      "env": {
+        "D365_METADATA_PATH": "${AVIA_D365_METADATA_PATH}"
+      }
+    },
+    "fo-semantic": {
+      "_about": "xplusplusai/fo-semantic-mcp — semantic NL search over 166k+ F&O artifacts. Commercial, requires FOINDEX_API_KEY.",
+      "_homepage": "https://github.com/xplusplusai/fo-semantic-mcp",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "fo-semantic-mcp"],
+      "env": {
+        "FOINDEX_API_KEY": "${FOINDEX_API_KEY}",
+        "FO_LOCAL_ASSETS_PATH": "${AVIA_D365_METADATA_PATH}"
+      }
+    },
+    "azure-devops": {
+      "_about": "microsoft/azure-devops-mcp — official Microsoft MCP for Azure DevOps. Entra browser auth on first run.",
+      "_homepage": "https://github.com/microsoft/azure-devops-mcp",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "${ADO_ORG}"]
+    },
+    "erp": {
+      "_about": "Microsoft Dynamics 365 ERP MCP (dynamic, public preview). Requires F&O >=10.0.47 + feature enabled + agent platform allow-listed. Recommended model: claude-sonnet-4-6 (per Microsoft guidance for Sonnet 4.5 in the preview).",
+      "_homepage": "https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/copilot/copilot-mcp",
+      "type": "streamable-http",
+      "url": "${D365_ERP_MCP_URL}",
+      "auth": {
+        "type": "oauth-client-credentials",
+        "tenantId": "${D365_TENANT_ID}",
+        "clientId": "${D365_CLIENT_ID}",
+        "clientSecret": "${D365_CLIENT_SECRET}",
+        "resource": "${D365_RESOURCE}"
+      }
+    }
+  }
+}

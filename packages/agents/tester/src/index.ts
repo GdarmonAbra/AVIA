@@ -9,12 +9,12 @@ export interface TesterAgentInput {
 }
 
 export interface TesterAgentDeps {
-  d365Query: AgentToolDef;
-  d365Create: AgentToolDef;
-  d365Update: AgentToolDef;
-  d365InvokeAction: AgentToolDef;
-  d365ReadFormState: AgentToolDef;
-  xppReadObject: AgentToolDef;
+  /**
+   * Typically `registry.toolsFor("erp", "d365fo-nav")`.
+   * Microsoft recommends Claude Sonnet 4.5 for the ERP MCP; AVIA uses
+   * `claude-sonnet-4-6` by default as the equivalent current-gen model.
+   */
+  tools: AgentToolDef[];
   model?: string;
   maxTurns?: number;
 }
@@ -25,17 +25,12 @@ export async function runTesterAgent(
 ): Promise<TestReport> {
   return runAgent({
     systemPrompt: TESTER_SYSTEM_PROMPT,
-    tools: [
-      deps.d365Query,
-      deps.d365Create,
-      deps.d365Update,
-      deps.d365InvokeAction,
-      deps.d365ReadFormState,
-      deps.xppReadObject,
-    ],
+    tools: deps.tools,
     input,
     outputSchema: TestReport,
     ...(deps.model !== undefined ? { model: deps.model } : {}),
     maxTurns: deps.maxTurns ?? 40,
   });
 }
+
+export { TESTER_SYSTEM_PROMPT } from "./prompt.js";

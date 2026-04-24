@@ -1,122 +1,31 @@
-# MCP Contracts
+# MCP Servers in use
 
-Each server registers its tools on stdio via `@modelcontextprotocol/sdk`. All inputs/outputs are validated with `zod` on both sides. Errors are returned as structured `{ error: { code, message, details? } }` payloads, not exceptions, so agents can reason about them.
+AVIA no longer defines its own MCP tool surfaces — it binds to existing servers. Tool contracts are owned by those servers; their READMEs are the source of truth. What follows is an integration summary.
 
-## `xpp` server
+| Name in `mcp.json` | Source | Install | Transport | Notes |
+|---|---|---|---|---|
+| `xpp-author` | [ccampora/mcp_xpp](https://github.com/ccampora/mcp_xpp) (MIT) | Clone + `npm install` + `.\tools\build-and-run.ps1 -Action build`; set `MCP_XPP_PATH` | stdio | Write-capable X++ authoring. Uses Named Pipes to a C# .NET 4.8 service; requires VS2022 + D365 dev tools on the host. 10 tools incl. `create_xpp_object`, `create_form`, `delete_xpp_object`, `execute_object_modification`, `find_xpp_object`, `inspect_xpp_object`, `build_object_index`. |
+| `d365fo-nav` | [dynamics365ninja/d365fo-mcp-server](https://github.com/dynamics365ninja/d365fo-mcp-server) (MIT) | Clone + `npm install` + `npm run extract-metadata` + `npm run build-database`; set `MCP_D365FO_NAV_PATH` | stdio | 54 tools over ~584k indexed symbols. Metadata lookup, CoC detection, security hierarchy, labels, table relations, XML-based table/form generation. Some write capability on `AxTable` / `AxForm`. |
+| `fo-semantic` | [xplusplusai/fo-semantic-mcp](https://github.com/xplusplusai/fo-semantic-mcp) (commercial) | `npx -y fo-semantic-mcp`; needs `FOINDEX_API_KEY`, `FO_LOCAL_ASSETS_PATH` | stdio | 2 tools: `search_FO_artifacts` (NL semantic search over 166k+ artifacts), `fo-development-assistant` (guided workflow). |
+| `azure-devops` | [microsoft/azure-devops-mcp](https://github.com/microsoft/azure-devops-mcp) (MIT) | `npx -y @azure-devops/mcp <org>`; browser Entra auth on first run | stdio | Domains: `core`, `work`, `work-items`, `search`, `test-plans`, `repositories`, `wiki`, `pipelines`, `advanced-security`. |
+| `erp` | [Microsoft Dynamics 365 ERP MCP (dynamic)](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/copilot/copilot-mcp) | Enable feature in F&O Feature Management + allow-list AVIA on "Allowed MCP Clients" page | streamable-http | URL `https://<env>.operations.dynamics.com/mcp`. Dynamic tool list. Requires F&O ≥ 10.0.47 and Tier-2 or a UDE. Entra client-credentials auth. Public preview. |
 
-Owner: `packages/mcp-servers/xpp`. Shells out to `dotnet avia-xpp <verb> --json`.
+## How AVIA binds to them
 
-### `xpp_find_object`
-```ts
-input: { type: XppObjectType, query: string, model?: string }
-output: { matches: Array<{ type, name, model, path }> }
-```
+`mcp-clients/mcp.json` has a `mcpServers` entry for each server. `${VAR}` placeholders are expanded from `process.env` at load time by `packages/agents/shared/src/mcpRegistry.ts`. Tool names are namespaced `${server}__${tool}` — so `xpp-author__create_xpp_object`, `azure-devops__wit_get_work_item`, etc. — and the adapter maps them back at dispatch.
 
-### `xpp_read_object`
-```ts
-input: { type: XppObjectType, name: string, model?: string }
-output: { object: XppObject } // full metadata + source where applicable
-```
+## Auth summary
 
-### `xpp_create_object`
-```ts
-input: { type: XppObjectType, name: string, model: string, properties: Record<string, unknown> }
-output: { object: XppObject }
-```
-
-### `xpp_update_object`
-```ts
-input: { type, name, model, patch: JsonPatch }
-output: { object: XppObject }
-```
-
-### `xpp_compile`
-```ts
-input: { model?: string, project?: string }
-output: { ok: boolean, errors: CompileDiagnostic[], warnings: CompileDiagnostic[], log: string }
-```
-
-### `xpp_deploy`
-```ts
-input: { model: string, env: "uat" | "sandbox" | "dev" }
-output: { ok: boolean, deploymentId: string }
-```
-
-### `xpp_sync_db`
-```ts
-input: { model: string }
-output: { ok: boolean, log: string }
-```
-
-`XppObjectType` = `"table" | "form" | "class" | "enum" | "view" | "query" | "menuItem" | "edt" | "map"` (see `packages/shared-types/src/index.ts`).
-
-## `d365-runtime` server
-
-Owner: `packages/mcp-servers/d365-runtime`. Uses client-credentials OAuth against `D365_RESOURCE`.
-
-### `d365_query`
-```ts
-input: { entity: string, filter?: string, select?: string[], top?: number }
-output: { value: Record<string, unknown>[] }
-```
-
-### `d365_create`
-```ts
-input: { entity: string, payload: Record<string, unknown> }
-output: { record: Record<string, unknown> }
-```
-
-### `d365_update`
-```ts
-input: { entity: string, key: Record<string, unknown>, patch: Record<string, unknown> }
-output: { record: Record<string, unknown> }
-```
-
-### `d365_invoke_action`
-```ts
-input: { action: string, payload?: Record<string, unknown> }
-output: { result: unknown }
-```
-
-### `d365_read_form_state`
-```ts
-input: { form: string, args?: Record<string, unknown> }
-output: { fields: Record<string, unknown>, validations: string[] } // via Metadata Service
-```
-
-## `azure-devops` server
-
-Owner: `packages/mcp-servers/azure-devops`. Uses PAT auth from `ADO_PAT`.
-
-### `ado_get_work_item`
-```ts
-input: { id: number }
-output: { workItem: { id, title, description, state, type, acceptanceCriteria?, fields } }
-```
-
-### `ado_update_work_item`
-```ts
-input: { id: number, patch: Array<{ op: "add" | "replace", path: string, value: unknown }> }
-output: { workItem: { id, rev } }
-```
-
-### `ado_create_pull_request`
-```ts
-input: { repo: string, source: string, target: string, title: string, body: string }
-output: { pullRequest: { id, url } }
-```
-
-### `ado_get_build_status`
-```ts
-input: { id: number }
-output: { build: { id, status, result } }
-```
+- `azure-devops`: Entra device login on first `npx` run, cached per host.
+- `erp`: OAuth 2.0 client-credentials against `https://login.microsoftonline.com/<tenant>/oauth2/token`, resource = F&O base URL. Token minted by AVIA and passed as `Authorization: Bearer` on the streamable-http transport.
+- `xpp-author`, `d365fo-nav`, `fo-semantic`: no runtime auth (local / API-key-only).
 
 ## Error envelope
 
-Any tool can return:
+AVIA's adapter normalizes failing `callTool` responses (`isError: true`) into:
+
 ```ts
-{ error: { code: string, message: string, details?: unknown } }
+{ error: { code: "mcp_tool_error", message: "<stringified content>" } }
 ```
 
-Agents are instructed in their system prompts that this is a recoverable signal, not a stop condition — they should read `error.code` and try an alternate approach before giving up.
+Agents' system prompts instruct them that this is a recoverable signal — try an alternate approach before giving up.

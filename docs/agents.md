@@ -1,50 +1,43 @@
 # Agents
 
-All agents share `packages/agents/shared`. They differ in system prompt, available tools, and output schema (validated with `zod` before being returned to the orchestrator).
+All agents share `packages/agents/shared` — one `runAgent(systemPrompt, tools, input)` harness built on Anthropic tool-use with **prompt caching** on the system prompt + tool list, and `claude-opus-4-7` as the default model. The Developer uses `claude-sonnet-4-6` for its compile-fix loop; the Tester uses `claude-sonnet-4-6` to align with Microsoft's Sonnet-4.5 recommendation for the ERP MCP (4.6 is the current-gen equivalent).
+
+All agent runners accept `tools: AgentToolDef[]` directly — the caller builds the tool list from the MCP registry.
 
 ## Summary
 
-- **Input**: `{ workItemId: string }`
-- **Output**: `WorkItemIntent { goal, acceptance[], scope, risks[] }`
-- **Tools**: `ado_get_work_item`
-- **Prompt skeleton** (see `packages/agents/summary/src/prompt.ts` — TODO):
-  > You are the Summary agent. Read the Azure DevOps work item, strip marketing language, and produce the *true intent*: the user-visible behavior change, acceptance criteria, and scope. Do not speculate about implementation. If the ticket is ambiguous, list the ambiguities.
+- **Input**: `{ workItemId }`
+- **Tools**: `registry.tools("azure-devops")`
+- **Output**: `WorkItemIntent`
+- **Prompt**: `packages/agents/summary/src/prompt.ts`
 
 ## Architect
 
 - **Input**: `WorkItemIntent`
-- **Output**: `DesignProposal { summary, changes[], acceptance[], risks[] }`
-- **Tools**: `xpp_find_object`, `xpp_read_object`, `ado_get_work_item` (read-only surface)
-- **Handoff**: the orchestrator transitions to `awaiting_user_approval` and blocks until the user approves/rejects/edits the proposal via the VS Code extension.
-- **Prompt skeleton**:
-  > You are the Architect agent for Dynamics 365 F&O. Given the intent, inspect existing objects (tables, forms, classes) to do a fit/gap analysis. Propose the minimum set of metadata changes that satisfies the acceptance criteria. Prefer extensions over overlayering.
+- **Tools**: `registry.toolsFor("d365fo-nav", "fo-semantic", "azure-devops")` — all read-only for this agent
+- **Output**: `DesignProposal` — the orchestrator transitions to `awaiting_user_approval` and blocks until the user approves/rejects via the VS Code extension
 
 ## Developer
 
 - **Input**: approved `DesignProposal`
-- **Output**: `BuildArtifact { model, env, compileLog, deploymentId }`
-- **Tools**: all of `xpp_*`
-- **Inner loop**: `write → compile → on error, fix → retry` up to `maxCompileLoops` (default 8). On success, call `xpp_deploy`.
-- **Prompt skeleton**:
-  > You are the Developer agent. Implement exactly the changes in the approved DesignProposal. Use the xpp_* tools to read existing code for context, then create/update objects. After every change, run xpp_compile and fix errors until clean. Do not expand the scope.
+- **Tools**: `registry.toolsFor("xpp-author", "d365fo-nav", "fo-semantic")`
+- **Output**: `BuildArtifact`
+- **Inner loop**: `write → compile → on error, fix → retry` up to `maxTurns` (default 60). On success, call `xpp-author`'s deploy tool.
 
 ## Tester
 
-- **Input**: `{ artifact: BuildArtifact, acceptance: string[] }`
-- **Output**: `TestReport { pass: boolean, results: TestResult[] }`
-- **Tools**: all of `d365_*`, `xpp_read_object` (for context)
-- **Behavior**: drives the live F&O environment via OData and Metadata Service to verify each acceptance criterion. It creates test records with an `Avia-Test-<taskId>` tag so cleanup is trivial.
-- **Loop**: on `pass: false`, the orchestrator routes the failures back to the Developer with the `TestReport` attached.
-- **Prompt skeleton**:
-  > You are the Tester agent. For each acceptance criterion, design a minimal scenario that exercises it against the live F&O environment. Use the d365_* tools. Tag every record you create with Avia-Test-<taskId>. Report each criterion as pass or fail with the exact tool calls and responses that prove it.
+- **Input**: `{ artifact, acceptance, taskId }`
+- **Tools**: `registry.toolsFor("erp", "d365fo-nav")`. The `erp` server is Microsoft's Dynamics 365 ERP MCP (dynamic). `d365fo-nav` is used for read-only metadata context.
+- **Output**: `TestReport`
+- **Loop**: on `pass: false` the orchestrator routes failures back to the Developer with the `TestReport` attached (bounded).
 
 ## Shared harness
 
-`runAgent({ systemPrompt, tools, input, model })` wraps the Anthropic tool-use loop:
+`runAgent({ systemPrompt, tools, input, outputSchema, model })` wraps the Anthropic tool-use loop:
 
-1. Marks `systemPrompt` and `tools` as cache breakpoints (`cache_control: { type: "ephemeral" }`).
+1. Marks `systemPrompt` and the last tool in the list as ephemeral cache breakpoints.
 2. Sends the initial user message (`JSON.stringify(input)`).
-3. Loops: if the response contains `tool_use` blocks, dispatches to the bound MCP tool and appends a `tool_result` turn; otherwise, parses the final assistant message as JSON and validates with the agent's output schema.
+3. Loops: if the response contains `tool_use` blocks, dispatches to the bound tool and appends a `tool_result` turn; otherwise parses the final assistant text as JSON and validates with the agent's output schema (zod).
 4. Enforces a per-agent max-tokens budget and max-turn count.
 
-All agents call `runAgent` — no agent should construct an Anthropic client directly.
+No agent should construct an Anthropic client directly.

@@ -3,9 +3,10 @@ import { DesignProposal, type WorkItemIntent } from "@avia/shared-types";
 import { ARCHITECT_SYSTEM_PROMPT } from "./prompt.js";
 
 export interface ArchitectAgentDeps {
-  xppFindObject: AgentToolDef;
-  xppReadObject: AgentToolDef;
-  adoGetWorkItem: AgentToolDef;
+  /**
+   * Typically `registry.toolsFor("d365fo-nav", "fo-semantic", "azure-devops")`.
+   */
+  tools: AgentToolDef[];
   model?: string;
 }
 
@@ -15,9 +16,11 @@ export async function runArchitectAgent(
 ): Promise<DesignProposal> {
   return runAgent({
     systemPrompt: ARCHITECT_SYSTEM_PROMPT,
-    tools: [deps.xppFindObject, deps.xppReadObject, deps.adoGetWorkItem],
+    tools: deps.tools,
     input,
     outputSchema: DesignProposal,
     ...(deps.model !== undefined ? { model: deps.model } : {}),
   });
 }
+
+export { ARCHITECT_SYSTEM_PROMPT } from "./prompt.js";

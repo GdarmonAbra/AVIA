@@ -7,7 +7,11 @@ export interface SummaryAgentInput {
 }
 
 export interface SummaryAgentDeps {
-  adoGetWorkItem: AgentToolDef;
+  /**
+   * Tool defs the agent can call — typically every tool from the `azure-devops`
+   * MCP server (`registry.tools("azure-devops")`).
+   */
+  tools: AgentToolDef[];
   model?: string;
 }
 
@@ -17,9 +21,11 @@ export async function runSummaryAgent(
 ): Promise<WorkItemIntent> {
   return runAgent({
     systemPrompt: SUMMARY_SYSTEM_PROMPT,
-    tools: [deps.adoGetWorkItem],
+    tools: deps.tools,
     input,
     outputSchema: WorkItemIntent,
     ...(deps.model !== undefined ? { model: deps.model } : {}),
   });
 }
+
+export { SUMMARY_SYSTEM_PROMPT } from "./prompt.js";
