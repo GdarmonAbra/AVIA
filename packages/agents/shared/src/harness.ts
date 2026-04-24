@@ -17,7 +17,9 @@ export interface RunAgentOptions<TOut> {
   systemPrompt: string;
   tools: AgentToolDef[];
   input: unknown;
-  outputSchema: z.ZodType<TOut>;
+  // Third type param left open so schemas with `.default(...)` (whose input
+  // type differs from output) still satisfy the constraint.
+  outputSchema: z.ZodType<TOut, z.ZodTypeDef, unknown>;
   model?: string;
   maxTokens?: number;
   maxTurns?: number;
@@ -75,7 +77,7 @@ export async function runAgent<TOut>(opts: RunAgentOptions<TOut>): Promise<TOut>
       model,
       max_tokens: maxTokens,
       system,
-      tools: toolsForApi,
+      tools: toolsForApi as unknown as Anthropic.Tool[],
       messages: messages as Anthropic.MessageParam[],
     })) as Anthropic.Message;
 

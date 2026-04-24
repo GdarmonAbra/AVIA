@@ -23,7 +23,7 @@ export async function runTesterAgent(
   input: TesterAgentInput,
   deps: TesterAgentDeps,
 ): Promise<TestReport> {
-  return runAgent({
+  return runAgent<TestReport>({
     systemPrompt: TESTER_SYSTEM_PROMPT,
     tools: deps.tools,
     input,

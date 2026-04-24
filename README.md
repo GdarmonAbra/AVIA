@@ -8,9 +8,11 @@ behavior in a live F&O environment. Every LLM call goes through the Anthropic
 Claude API; every F&O / ADO interaction goes through an **existing** MCP
 server (AVIA does not ship its own).
 
-> This repository is currently a **scaffold**. Interfaces, types, state machine,
-> and the MCP client adapter are in place; real prompt engineering, UI, and
-> orchestrator runner land in follow-up PRs (grep `TODO(avia-...)`).
+> This repository is a **working scaffold**. The CLI runner, state machine,
+> MCP registry + client, and Claude tool-use harness are wired and tested end
+> to end with mocked agents; what's still missing is real prompt engineering,
+> the VS Code cockpit (currently calls TODO stubs), and executing against a
+> live UDE + F&O tenant. See `docs/running.md` for how to drive it today.
 
 ## Layout
 
@@ -25,9 +27,10 @@ packages/
     shared/              Claude tool-use harness + prompt caching + MCP client + registry
     summary/             work item → WorkItemIntent
     architect/           intent → DesignProposal (human-approved)
-    developer/           proposal → BuildArtifact (compile-fix loop)
+    developer/           proposal → BuildArtifact, emitted as a VS2022 .sln + .rnrproj
     tester/              artifact → TestReport (drives live F&O via Microsoft's ERP MCP)
-  vscode-extension/      cockpit UI (runs the orchestrator)
+  cli/                   `avia` command — drives the pipeline end-to-end (see docs/running.md)
+  vscode-extension/      cockpit UI (thin wrapper over the CLI runner)
 docs/
   architecture.md        end-to-end flow + state machine
   agents.md              per-agent prompts + which MCP servers each binds to
@@ -66,15 +69,18 @@ pnpm -r run test
 pnpm -r run lint
 ```
 
-## Smoke checks
+## Running the pipeline
 
 ```bash
-# Summary agent against a mocked ADO tool (no tenant needed, exercises Claude loop)
-pnpm --filter @avia/agents-summary start -- --work-item=mock:1
+# Full run (Summary → Architect → human approval → Developer → Tester)
+pnpm --filter @avia/cli exec avia --work-item 1234
 
-# Summary agent against the real azure-devops MCP
-ADO_ORG=your-org pnpm --filter @avia/agents-summary start -- --work-item=1234
+# Laptop dry run — stops before anything touches F&O, for prompt/tool validation
+pnpm --filter @avia/cli exec avia --work-item 1234 --stop-after design
 ```
+
+See `docs/running.md` for the full env-var list, MCP server install steps, and
+flag reference.
 
 ## Safety
 

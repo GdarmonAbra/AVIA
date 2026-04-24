@@ -14,7 +14,7 @@ export async function runArchitectAgent(
   input: WorkItemIntent,
   deps: ArchitectAgentDeps,
 ): Promise<DesignProposal> {
-  return runAgent({
+  return runAgent<DesignProposal>({
     systemPrompt: ARCHITECT_SYSTEM_PROMPT,
     tools: deps.tools,
     input,

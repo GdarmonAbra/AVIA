@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { AgentToolDef } from "./harness.js";
 
 export type StdioServerConfig = {
@@ -69,7 +70,7 @@ export async function connectServer(
     const transport = new StreamableHTTPClientTransport(new URL(config.url), {
       requestInit: { headers },
     });
-    await client.connect(transport);
+    await client.connect(transport as unknown as Transport);
   }
 
   return {
@@ -122,12 +123,18 @@ export async function listServerTools(
   server: ConnectedServer,
 ): Promise<AgentToolDef[]> {
   const { tools } = await server.client.listTools();
-  return tools.map((t) => adaptTool(server, t));
+  return tools.map((t) =>
+    adaptTool(server, {
+      name: t.name,
+      description: t.description,
+      inputSchema: t.inputSchema as Record<string, unknown>,
+    }),
+  );
 }
 
 interface ListedTool {
   name: string;
-  description?: string;
+  description: string | undefined;
   inputSchema: Record<string, unknown>;
 }
 

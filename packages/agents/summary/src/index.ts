@@ -19,7 +19,7 @@ export async function runSummaryAgent(
   input: SummaryAgentInput,
   deps: SummaryAgentDeps,
 ): Promise<WorkItemIntent> {
-  return runAgent({
+  return runAgent<WorkItemIntent>({
     systemPrompt: SUMMARY_SYSTEM_PROMPT,
     tools: deps.tools,
     input,

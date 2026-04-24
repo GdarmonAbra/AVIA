@@ -62,9 +62,19 @@ export const DesignProposal = z.object({
 });
 export type DesignProposal = z.infer<typeof DesignProposal>;
 
+export const RnrProject = z.object({
+  name: z.string(),
+  model: z.string(),
+  rnrprojPath: z.string(), // absolute path to the .rnrproj
+});
+export type RnrProject = z.infer<typeof RnrProject>;
+
 export const BuildArtifact = z.object({
   model: z.string(),
   env: z.enum(["uat", "sandbox", "dev"]),
+  solutionPath: z.string(), // absolute path to the VS2022 .sln
+  projects: z.array(RnrProject).min(1),
+  configuration: z.enum(["Debug", "Release"]).default("Debug"),
   compileLog: z.string(),
   deploymentId: z.string(),
   deployedAt: z.string(), // ISO-8601

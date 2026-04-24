@@ -1,0 +1,39 @@
+{
+  "name": "@avia/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "avia": "dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./runner": {
+      "types": "./dist/runner.d.ts",
+      "import": "./dist/runner.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "lint": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@avia/agents-architect": "workspace:*",
+    "@avia/agents-developer": "workspace:*",
+    "@avia/agents-shared": "workspace:*",
+    "@avia/agents-summary": "workspace:*",
+    "@avia/agents-tester": "workspace:*",
+    "@avia/orchestrator": "workspace:*",
+    "@avia/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

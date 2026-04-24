@@ -16,7 +16,7 @@ export async function runDeveloperAgent(
   input: DesignProposal,
   deps: DeveloperAgentDeps,
 ): Promise<BuildArtifact> {
-  return runAgent({
+  return runAgent<BuildArtifact>({
     systemPrompt: DEVELOPER_SYSTEM_PROMPT,
     tools: deps.tools,
     input,

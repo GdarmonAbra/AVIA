@@ -1,13 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { runAgent, type AgentToolDef } from "./harness.js";
+import type { AnthropicLike } from "./claude.js";
 
 type StubMessage = { stop_reason: string; content: unknown[] };
 
-function stubClient(responses: StubMessage[]) {
+function stubClient(responses: StubMessage[]): AnthropicLike {
   const create = vi.fn();
   for (const r of responses) create.mockResolvedValueOnce(r);
-  return { messages: { create } } as unknown as Parameters<typeof runAgent>[0]["client"];
+  return { messages: { create } } as unknown as AnthropicLike;
 }
 
 describe("runAgent", () => {

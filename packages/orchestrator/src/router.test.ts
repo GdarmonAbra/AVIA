@@ -36,6 +36,11 @@ const PROPOSAL: DesignProposal = {
 const ARTIFACT: BuildArtifact = {
   model: "m",
   env: "dev",
+  solutionPath: "C:\\AOS\\PLD\\m\\VSProjects\\m.sln",
+  projects: [
+    { name: "m", model: "m", rnrprojPath: "C:\\AOS\\PLD\\m\\VSProjects\\m\\m.rnrproj" },
+  ],
+  configuration: "Debug",
   compileLog: "",
   deploymentId: "d",
   deployedAt: NOW,
