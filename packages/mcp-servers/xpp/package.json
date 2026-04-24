@@ -1,0 +1,26 @@
+{
+  "name": "@avia/mcp-xpp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "bin": {
+    "avia-mcp-xpp": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run --passWithNoTests",
+    "lint": "tsc -b --noEmit",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@avia/shared-types": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

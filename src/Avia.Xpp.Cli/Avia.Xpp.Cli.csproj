@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Avia.Xpp.Cli</RootNamespace>
+    <AssemblyName>Avia.Xpp.Cli</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <!--
+    Live D365 metadata assemblies are only referenced when AVIA_D365_TOOLS_PATH
+    points at a real dev-box install. CI builds without it and falls back to
+    InMemoryMetadataProvider.
+  -->
+  <ItemGroup Condition="'$(AVIA_D365_TOOLS_PATH)' != ''">
+    <Reference Include="Microsoft.Dynamics.AX.Metadata">
+      <HintPath>$(AVIA_D365_TOOLS_PATH)\Microsoft.Dynamics.AX.Metadata.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.Dynamics.AX.Metadata.Core">
+      <HintPath>$(AVIA_D365_TOOLS_PATH)\Microsoft.Dynamics.AX.Metadata.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.Dynamics.AX.Metadata.Storage">
+      <HintPath>$(AVIA_D365_TOOLS_PATH)\Microsoft.Dynamics.AX.Metadata.Storage.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+</Project>

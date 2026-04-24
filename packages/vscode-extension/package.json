@@ -1,0 +1,45 @@
+{
+  "name": "@avia/vscode-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/extension.js",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run --passWithNoTests",
+    "lint": "tsc -b --noEmit"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "avia.runOnWorkItem",
+        "title": "AVIA: Run on work item…"
+      },
+      {
+        "command": "avia.resumeTask",
+        "title": "AVIA: Resume task…"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onCommand:avia.runOnWorkItem",
+    "onCommand:avia.resumeTask"
+  ],
+  "dependencies": {
+    "@avia/agents-architect": "workspace:*",
+    "@avia/agents-developer": "workspace:*",
+    "@avia/agents-shared": "workspace:*",
+    "@avia/agents-summary": "workspace:*",
+    "@avia/agents-tester": "workspace:*",
+    "@avia/orchestrator": "workspace:*",
+    "@avia/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

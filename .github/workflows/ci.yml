@@ -1,0 +1,66 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_live_smoke:
+        description: "Run live F&O smoke test"
+        required: false
+        default: "false"
+
+jobs:
+  ts:
+    name: TypeScript build + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm -r run build
+      - run: pnpm -r run test
+      - run: pnpm -r run lint
+
+  dotnet:
+    name: .NET build + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet restore src/Avia.Xpp.sln
+      - run: dotnet build src/Avia.Xpp.sln --configuration Release --no-restore
+      - run: dotnet test src/Avia.Xpp.sln --configuration Release --no-build
+
+  live-smoke:
+    name: Live F&O smoke (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_smoke == 'true'
+    runs-on: ubuntu-latest
+    needs: [ts]
+    env:
+      D365_BASE_URL: ${{ secrets.D365_BASE_URL }}
+      D365_TENANT_ID: ${{ secrets.D365_TENANT_ID }}
+      D365_CLIENT_ID: ${{ secrets.D365_CLIENT_ID }}
+      D365_CLIENT_SECRET: ${{ secrets.D365_CLIENT_SECRET }}
+      D365_RESOURCE: ${{ secrets.D365_RESOURCE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm -r run build
+      - run: pnpm --filter @avia/mcp-d365-runtime run smoke
