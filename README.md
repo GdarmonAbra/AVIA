@@ -40,8 +40,7 @@ AVIA does **not** write its own X++, ADO, or OData MCP servers. It binds to:
 
 | Name | Source | Role |
 |---|---|---|
-| `xpp-author` | [ccampora/mcp_xpp](https://github.com/ccampora/mcp_xpp) | Write-capable X++ authoring against the local UDE box |
-| `d365fo-nav` | [dynamics365ninja/d365fo-mcp-server](https://github.com/dynamics365ninja/d365fo-mcp-server) | 54 tools for X++ read / navigation at scale |
+| `d365fo-nav` | [dynamics365ninja/d365fo-mcp-server](https://github.com/dynamics365ninja/d365fo-mcp-server) | The single X++ surface AVIA uses — 54 tools for read/navigation + limited `AxTable`/`AxForm` writes |
 | `fo-semantic` | [xplusplusai/fo-semantic-mcp](https://github.com/xplusplusai/fo-semantic-mcp) | Semantic NL search across F&O artifacts (commercial) |
 | `azure-devops` | [microsoft/azure-devops-mcp](https://github.com/microsoft/azure-devops-mcp) | Work items, repos, PRs, pipelines |
 | `erp` | [Microsoft Dynamics 365 ERP MCP (dynamic)](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/copilot/copilot-mcp) | Live F&O runtime ops for the Tester agent |
@@ -52,7 +51,7 @@ Config in `mcp-clients/mcp.json`. See `mcp-clients/README.md` for install steps.
 
 - Node 20.11+ and `pnpm` 9
 - An Anthropic API key (`ANTHROPIC_API_KEY`)
-- A Windows UDE box with VS2022 + D365 dev tools for `xpp-author` / `d365fo-nav`
+- A Windows UDE box with VS2022 + D365 dev tools for `d365fo-nav`
 - An F&O cloud tenant (≥ 10.0.47, Tier-2 or UDE) with the ERP MCP feature enabled and AVIA allow-listed, for the Tester agent
 - Entra app registration for `erp` client-credentials auth
 

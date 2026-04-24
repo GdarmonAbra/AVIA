@@ -4,7 +4,8 @@ import { DEVELOPER_SYSTEM_PROMPT } from "./prompt.js";
 
 export interface DeveloperAgentDeps {
   /**
-   * Typically `registry.toolsFor("xpp-author", "d365fo-nav", "fo-semantic")`.
+   * Typically `registry.toolsFor("d365fo-nav", "fo-semantic")` — d365fo-nav is
+   * the single X++ surface (read + limited write).
    */
   tools: AgentToolDef[];
   model?: string;

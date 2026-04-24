@@ -20,9 +20,9 @@ All agent runners accept `tools: AgentToolDef[]` directly — the caller builds 
 ## Developer
 
 - **Input**: approved `DesignProposal`
-- **Tools**: `registry.toolsFor("xpp-author", "d365fo-nav", "fo-semantic")`
+- **Tools**: `registry.toolsFor("d365fo-nav", "fo-semantic")` — `d365fo-nav` is the single X++ surface (read + limited write)
 - **Output**: `BuildArtifact`
-- **Inner loop**: `write → compile → on error, fix → retry` up to `maxTurns` (default 60). On success, call `xpp-author`'s deploy tool.
+- **Inner loop**: `write → compile → on error, fix → retry` up to `maxTurns` (default 60). On success, call `d365fo-nav`'s deploy tool.
 
 ## Tester
 

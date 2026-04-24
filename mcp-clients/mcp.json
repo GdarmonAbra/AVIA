@@ -2,18 +2,8 @@
   "$schema": "https://modelcontextprotocol.io/schemas/mcp.json",
   "_comment": "External MCP servers AVIA launches. The agents/shared McpRegistry consumes this file. Copy env values from .env.example; fields prefixed with ${ENV} are expanded at load time.",
   "mcpServers": {
-    "xpp-author": {
-      "_about": "ccampora/mcp_xpp — write-capable X++ authoring via VS2022 service. Requires Windows + VS2022 + D365 dev tools (your UDE box).",
-      "_homepage": "https://github.com/ccampora/mcp_xpp",
-      "type": "stdio",
-      "command": "node",
-      "args": ["${MCP_XPP_PATH}/build/index.js"],
-      "env": {
-        "D365_METADATA_PATH": "${AVIA_D365_METADATA_PATH}"
-      }
-    },
     "d365fo-nav": {
-      "_about": "dynamics365ninja/d365fo-mcp-server — 54 tools for read/navigate over ~584k indexed X++ symbols, plus local AxTable/AxForm mutations.",
+      "_about": "dynamics365ninja/d365fo-mcp-server — 54 tools for read/navigate over ~584k indexed X++ symbols, plus local AxTable/AxForm mutations. Used by both Architect (read) and Developer (read+write) in AVIA.",
       "_homepage": "https://github.com/dynamics365ninja/d365fo-mcp-server",
       "type": "stdio",
       "command": "node",
