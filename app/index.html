@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#6d5dfc" />
+  <title>NeuroNova — Train Your Brain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand" data-nav="home">
+        <span class="brand-mark">◆</span>
+        <span class="brand-name">NeuroNova</span>
+      </div>
+      <nav class="topnav">
+        <button class="navlink" data-nav="home">Train</button>
+        <button class="navlink" data-nav="stats">Progress</button>
+      </nav>
+      <div class="streak-chip" id="streakChip" title="Daily training streak">
+        <span class="flame">🔥</span><span id="streakCount">0</span>
+      </div>
+    </header>
+
+    <!-- Main view container — screens are swapped in here -->
+    <main id="view" class="view"></main>
+
+    <footer class="footer">
+      <span>NeuroNova · a brain-training demo · scores saved locally on this device</span>
+    </footer>
+  </div>
+
+  <!-- Core -->
+  <script src="js/storage.js"></script>
+  <script src="js/engine.js"></script>
+  <!-- Games -->
+  <script src="js/games/memory-matrix.js"></script>
+  <script src="js/games/speed-match.js"></script>
+  <script src="js/games/math-blitz.js"></script>
+  <script src="js/games/reaction.js"></script>
+  <script src="js/games/n-back.js"></script>
+  <script src="js/games/color-match.js"></script>
+  <!-- App boot -->
+  <script src="js/app.js"></script>
+</body>
+</html>
