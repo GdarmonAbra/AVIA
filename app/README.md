@@ -19,6 +19,33 @@ cd app && python3 -m http.server 8000
 # then visit http://localhost:8000
 ```
 
+## Run it on your phone
+
+NeuroNova is an installable **PWA** (Progressive Web App) — it gets a home-screen
+icon and works offline once loaded. Two ways to get it on a phone:
+
+### A) Same Wi-Fi as your computer (fastest, no hosting)
+```bash
+cd app && python3 -m http.server 8000
+```
+Find your computer's local IP (`ipconfig` on Windows, `ipconfig getifaddr en0` on
+macOS, `hostname -I` on Linux), then on the phone's browser open
+`http://<that-ip>:8000` — e.g. `http://192.168.1.20:8000`.
+
+### B) Host it free on GitHub Pages (open it anywhere)
+This repo includes `.github/workflows/pages.yml`. To turn it on:
+1. In GitHub: **Settings → Pages → Build and deployment → Source = "GitHub Actions"**.
+2. Push to `main` (or run the **Deploy NeuroNova to GitHub Pages** workflow manually).
+3. The workflow prints the public URL — open it on your phone.
+
+### Add to Home Screen (acts like a native app)
+- **iPhone (Safari):** Share → *Add to Home Screen*.
+- **Android (Chrome):** ⋮ menu → *Install app* / *Add to Home screen*.
+
+> The service worker only registers over `http(s)://`, not `file://`, so for full
+> PWA/offline behavior use one of the methods above rather than opening the file
+> directly.
+
 ## The games
 
 | Game | Skill | What it trains |
@@ -44,7 +71,10 @@ cd app && python3 -m http.server 8000
 
 ```
 app/
-├── index.html              # shell: top bar, view container, script tags
+├── index.html              # shell: top bar, view container, script tags, PWA meta
+├── manifest.webmanifest    # PWA manifest (name, icons, theme)
+├── sw.js                   # service worker: offline app-shell cache
+├── icons/                  # generated PNG app icons (see tools/generate-icons.js)
 ├── css/styles.css          # all styling (CSS custom properties, no framework)
 ├── js/
 │   ├── storage.js          # localStorage layer: scores, streak, history, BPI
