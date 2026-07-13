@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxModelInfo xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.datacontract.org/2004/07/Microsoft.Dynamics.AX.Metadata.MetaModel">
+  <AppliedUpdates i:nil="true" />
+  <Customization>DoNotAllow</Customization>
+  <Description>PSS customizations upgraded from AX 2012 VAR layer (Packer). Overlayered code converted to extensions and Chain of Command.</Description>
+  <DisplayName>PSS Extensions</DisplayName>
+  <Id>895571001</Id>
+  <Layer>10</Layer>
+  <Locked>false</Locked>
+  <ModelModule>PSSExtensions</ModelModule>
+  <ModelReferences i:nil="true" />
+  <ModuleReferences xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+    <a:string>ApplicationPlatform</a:string>
+    <a:string>ApplicationFoundation</a:string>
+    <a:string>ApplicationSuite</a:string>
+  </ModuleReferences>
+  <Name>PSSExtensions</Name>
+  <Publisher>PSS</Publisher>
+  <SolutionId>00000000-0000-0000-0000-000000000000</SolutionId>
+  <VersionBuild>0</VersionBuild>
+  <VersionMajor>1</VersionMajor>
+  <VersionMinor>0</VersionMinor>
+  <VersionRevision>0</VersionRevision>
+</AxModelInfo>

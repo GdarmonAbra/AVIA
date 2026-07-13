@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>PSSPurchFormLetterContract_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// Extension of <c>PurchFormLetterContract</c> carrying the PSS import folder reference
+/// through purchase order posting. Upgraded from the AX 2012 VAR-layer member
+/// added by PSS-001-IMPORTFOLDER.
+/// </summary>
+[ExtensionOf(classStr(PurchFormLetterContract))]
+final class PSSPurchFormLetterContract_Extension
+{
+    private RefRecId pssImpFolderTableRecId;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>pssParmImpFolderTableRecId</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets or sets the record ID of the PSS import folder that the posting originates from.
+    /// </summary>
+    /// <param name = "_pssImpFolderTableRecId">The import folder record ID.</param>
+    /// <returns>The import folder record ID.</returns>
+    [DataMemberAttribute('PssImpFolderTableRecId')]
+    public RefRecId pssParmImpFolderTableRecId(RefRecId _pssImpFolderTableRecId = pssImpFolderTableRecId)
+    {
+        pssImpFolderTableRecId = _pssImpFolderTableRecId;
+        return pssImpFolderTableRecId;
+    }
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

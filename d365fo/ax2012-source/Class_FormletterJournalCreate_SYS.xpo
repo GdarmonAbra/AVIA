@@ -1,0 +1,1481 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: FormletterJournalCreate unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #FormletterJournalCreate
+    PROPERTIES
+      Name                #FormletterJournalCreate
+      RunOn               #Server
+      Origin              #{2D170000-0000-1000-5173-0C9D7D78F80D}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #allocateNumAndVoucher
+        #/// <summary>
+        #///   Allocates a journal and voucher number from the corresponding number sequences.
+        #/// </summary>
+        #/// <returns>
+        #///   A <c>NumberSeq</c> object.
+        #/// </returns>
+        #protected NumberSeq allocateNumAndVoucher()
+        #{
+        #    NumberSeq               localNumberSeq;
+        #    NumberSequenceReference localNumberSequenceReferenceVoucher = this.numberSequenceReferenceVoucher();
+        #    NumberSequenceReference localNumberSequenceReferenceNum     = this.numberSequenceReferenceNum();
+        #
+        #    if (localNumberSequenceReferenceVoucher && localNumberSequenceReferenceNum)
+        #    {
+        #
+        #        // <GEERU>
+        #        if (SysCountryRegionCode::isLegalEntityInCountryRegion([ #isoRU ]))
+        #        {
+        #            localNumberSeq = NumberSeq::newGetNumAndVoucher(localNumberSequenceReferenceNum,
+        #                                                            localNumberSequenceReferenceVoucher,
+        #                                                            false,
+        #                                                            false,
+        #                                                            UnknownNoYes::No);
+        #        }
+        #        else
+        #        {
+        #            localNumberSeq = NumberSeq::newGetNumAndVoucher(localNumberSequenceReferenceNum,
+        #                                                            localNumberSequenceReferenceVoucher);
+        #        }
+        #        // </GEERU>
+        #    }
+        #    else if (localNumberSequenceReferenceNum)
+        #    {
+        #
+        #        // <GEERU>
+        #        if (SysCountryRegionCode::isLegalEntityInCountryRegion([ #isoRU ]))
+        #        {
+        #            localNumberSeq = NumberSeq::newGetNum(localNumberSequenceReferenceNum,
+        #                                                  false,
+        #                                                  false,
+        #                                                  UnknownNoYes::No);
+        #        }
+        #        else
+        #        {
+        #            localNumberSeq = NumberSeq::newGetNum(localNumberSequenceReferenceNum);
+        #        }
+        #        // </GEERU>
+        #    }
+        #
+        #    return localNumberSeq;
+        #}
+      ENDSOURCE
+      SOURCE #check
+        #/// <summary>
+        #///   Determines whether the journal can be created.
+        #/// </summary>
+        #/// <returns>
+        #///   true if the journal can be created; otherwise, false.
+        #/// </returns>
+        #protected boolean check()
+        #{
+        #    return formletterProvider.checkJournal();
+        #}
+      ENDSOURCE
+      SOURCE #checkDiscardLine
+        #/// <summary>
+        #///   Determines whether a journal line can be created.
+        #/// </summary>
+        #/// <param name="_parmLine">
+        #///   The record to base the journal line upon.
+        #/// </param>
+        #/// <returns>
+        #///   true if a journal line can be created; otherwise, false.
+        #/// </returns>
+        #protected boolean checkDiscardLine(Common _parmLine)
+        #{
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #checkDuplicateNum_W
+        #/// <summary>
+        #///     This method is used to check if a duplicate invoice number exists. This is just a dummy method and has been over-written in the child classes.
+        #/// </summary>
+        #/// <param name="_num">
+        #///     InvoiceId of the unposted transaction that needs to be checked for duplicity.
+        #/// </param>
+        #/// <param name="_salesId">
+        #///     SalesId of the unposted transaction.
+        #/// </param>
+        #/// <param name="_transDate">
+        #///     InvoiceDate or DeliveryDate of the unposted transaction.
+        #/// </param>
+        #/// <returns>
+        #///     True, if a a posted transcation exists with the same InvoiceId.
+        #/// </returns>
+        #// <GEEU>
+        #protected boolean checkDuplicateNum_W(Num _num, SalesIdBase _salesId, TransDate _transDate)
+        #{
+        #    return true;
+        #}
+        #// </GEEU>
+      ENDSOURCE
+      SOURCE #checkNoThrow
+        #/// <summary>
+        #/// Determines whether a journal should be created.
+        #/// </summary>
+        #/// <returns>
+        #/// true if a journal can be created; otherwise, false.
+        #/// </returns>
+        #/// <remarks>
+        #/// If a journal is not created, no exception is thrown.A journal is not created if it contains no
+        #/// lines.
+        #/// </remarks>
+        #protected boolean checkNoThrow()
+        #{
+        #    // Only create the journal if parm lines exists, but don't throw if no lines exists.
+        #    return this.linesExists();
+        #}
+      ENDSOURCE
+      SOURCE #checkVATTaxAgentChargeType_RU
+        #/// <summary>
+        #///    Checks if VAT tax agent charge source is correct.
+        #/// </summary>
+        #/// <returns>
+        #///    true if VAT tax agent charge source is correct; otherwise false.
+        #/// </returns>
+        #protected boolean checkVATTaxAgentChargeType_RU()
+        #{
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #/// <summary>
+        #///    The <c>FormletterJournalCreate</c> class is the base class used to create journals when updating
+        #///    sales orders, purchase orders, and requests for quotes.
+        #/// </summary>
+        #/// <remarks>
+        #///    The <c>formletterJournalCreate</c> class implements the template pattern, and defines how to create a
+        #///    journal with a header and some lines.There will be one child class for each type of journal that
+        #///    can be posted as each journal type has its own set of tables.
+        #/// </remarks>
+        #abstract class FormletterJournalCreate
+        #{
+        #    ParmId                  parmId;
+        #    InterCompanyPosted      interCompanyPosted;
+        #    AmountCur               lineValue;
+        #    AmountCur               lineValueInclTax;
+        #    InventQty               updateNowInvent;
+        #    UnitQty                 updateNow;
+        #    Tax                     tax;
+        #    AmountCur               cashDiscAmount;
+        #    Common                  parmTable;
+        #    Common                  parmUpdate;
+        #    DocumentStatus          documentStatus;
+        #    TmpTaxWorkTrans         journalTmpTaxWorkTrans;
+        #    Num                     journalNumber;
+        #    Num                     voucher;
+        #    LineNum                 lineNum;
+        #    RecordInsertList        recordInsertListHeader;
+        #    RecordSortedList        recordSortedListHeader;
+        #    RecordInsertList        recordListLine;
+        #    List                    listLine;
+        #    RecordInsertList        recordListLinks;
+        #    NumberSeq               numberSeq;
+        #    boolean                 proforma;
+        #    WMSShipmentId           shipmentId;
+        #    boolean                 inBatch;
+        #    UserId                  batchCreatedBy;
+        #
+        #    RecordSortedList        recordListParmLine;
+        #    Set                     origOrderIdSet;
+        #
+        #    FormletterProvider      formletterProvider;
+        #    FormLetterContract      interCompanyFormletterContract;
+        #
+        #    Common                  relatedJournal;
+        #
+        #    systemSequence          systemSequence;
+        #
+        #    // <GEERU><GEEPL>
+        #    #isoCountryRegionCodes
+        #    // </GEERU></GEEPL>
+        #
+        #    // <GEEW>
+        #    //LtDocNumberingCode      ltDocNumberingCode;
+        #    // </GEEW>
+        #    // <GIN>
+        #    boolean                 printGoodsReceiptNote;
+        #    TaxWithholdCalculation_IN   taxWithholdCalculation;
+        #    // </GIN>
+        #    // <GEEPL>
+        #    PlFiscalDocType         fiscalDocType;
+        #    InventLocationId        inventLocationId;
+        #    // </GEEPL>
+        #    // <GEELV>
+        #    //NoYes                   useStateInvoice;
+        #    // </GEELV>
+        #    // <GEEU>
+        #    LtDocNumberingCode      ltDocNumberingCode;
+        #    // </GEEU>
+        #    // <GEERU>
+        #    RecordInsertList        recordListCorrLinks;
+        #    // </GEERU>
+        #}
+      ENDSOURCE
+      SOURCE #createAgreementLinks
+        #/// <summary>
+        #///    Creates the links between the journal lines and the agreement lines.
+        #/// </summary>
+        #protected void createAgreementLinks()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #createDiscardedJournalLine
+        #/// <summary>
+        #///   Handles discarded journal line.
+        #/// </summary>
+        #/// <param name="_common">
+        #///   The record to base the journal line upon.
+        #/// </param>
+        #// <GEEU>
+        #protected void createDiscardedJournalLine(Common _common)
+        #{
+        #}
+        #// </GEEU>
+      ENDSOURCE
+      SOURCE #createFailed
+        #/// <summary>
+        #///   Called when the journal creation failed.
+        #/// </summary>
+        #/// <param name="_logText">
+        #///   A <c>String</c> with an error message.
+        #/// </param>
+        #protected void createFailed(LogText _logText = '')
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #createJournal
+        #private void createJournal()
+        #{
+        #    LogText     logText;
+        #    Counter     origInfologNum = infologLine();
+        #
+        #    ttsbegin;
+        #    this.init();
+        #    this.initSourceTable();
+        #    this.initTotals();
+        #    this.initFormletterProvider();
+        #
+        #    if (this.checkNoThrow()) // skip journal without throwing an exception.
+        #    {
+        #        this.initRecordList();
+        #        if (this.check())
+        #        {
+        #            this.initJournalHeader();
+        #            this.createJournalHeader();
+        #            this.createJournalLines();
+        #            if (this.isJournalCreated())
+        #            {
+        #                this.insertRecordList();
+        #                this.createAgreementLinks();
+        #                this.endCreate();
+        #
+        #                // <GEERU>
+        #                if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoRU])
+        #                 && !this.checkVATTaxAgentChargeType_RU())
+        #                {
+        #                    throw error("@SYS21533");
+        #                }
+        #                // </GEERU>
+        #            }
+        #            else
+        #            {//No journal lines were created so roll back creation of journal header.
+        #                this.noLinesForPosting(true);
+        #            }
+        #        }
+        #        else
+        #        {
+        #            ttsabort;
+        #
+        #            logText = Info::infoCon2Str(infolog.copy(origInfologNum + 1, infologLine()));
+        #            this.createFailed(logText);
+        #
+        #            throw error(strFmt("@SYS26498", this.parmParmTable().(this.fieldIdParmTable_OrderId())));
+        #        }
+        #    }
+        #    else
+        #    {
+        #        this.noLinesForPosting();
+        #    }
+        #
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #createJournalHeader
+        #/// <summary>
+        #///    Creates the journal header when updating the sales order, the purchase order, or the request for
+        #///    quote.
+        #/// </summary>
+        #abstract protected void createJournalHeader()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #createJournalLine
+        #/// <summary>
+        #///   Creates a journal line.
+        #/// </summary>
+        #/// <param name="_common">
+        #///   The record to base the journal line upon.
+        #/// </param>
+        #abstract protected void  createJournalLine(Common _common)
+        #{
+        #
+        #}
+      ENDSOURCE
+      SOURCE #createJournalLines
+        #/// <summary>
+        #///    Creates the journal lines when updating the sales order, the purchase order, or the request for
+        #///    quote.
+        #/// </summary>
+        #protected void createJournalLines()
+        #{
+        #    Common  parmLine;
+        #    Num     origOrderId;
+        #    // <GEEU>
+        #    #ISOCountryRegionCodes
+        #    // </GEEU>
+        #    origOrderIdSet = new Set(Types::String);
+        #    this.initLoopLines();
+        #    parmLine  = this.typeParmLine();
+        #
+        #    ttsbegin;
+        #    recordListParmLine = this.recordListParmLine();
+        #    recordListParmLine.first(parmLine);
+        #    while (parmLine)
+        #    {
+        #        if (!this.checkDiscardLine(parmLine))
+        #        {
+        #            lineNum ++;
+        #            this.createJournalLine(parmLine);
+        #            origOrderId = parmLine.(this.fieldIdParmLine_OrigOrderId());
+        #            if (!origOrderIdSet.in(origOrderId))
+        #            {//Only create a link record for each order.
+        #                this.createJournalLink(parmLine);
+        #                origOrderIdSet.add(origOrderId);
+        #            }
+        #        }
+        #        // <GEEU>
+        #        else
+        #        {
+        #            this.createDiscardedJournalLine(parmLine);
+        #        }
+        #        // </GEEU>
+        #
+        #        if (! recordListParmLine.next(parmLine))
+        #        {
+        #            break;
+        #        }
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #createJournalLink
+        #/// <summary>
+        #/// Creates a journal link.
+        #/// </summary>
+        #/// <param name="_common">
+        #/// The record on which to base the journal link.
+        #/// </param>
+        #abstract protected void createJournalLink(Common _common)
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #endCreate
+        #/// <summary>
+        #///    Executes when the journal creation is completed.
+        #/// </summary>
+        #protected void endCreate()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #fieldIdParmLine_OrigOrderId
+        #/// <summary>
+        #/// Gets the field ID for the field that contains the original order ID in the posting parameter line
+        #/// table.
+        #/// </summary>
+        #/// <returns>
+        #/// A field ID.
+        #/// </returns>
+        #protected FieldId fieldIdParmLine_OrigOrderId()
+        #{
+        #    return formletterProvider.fieldIdParmLine_OrigOrderId();
+        #}
+      ENDSOURCE
+      SOURCE #fieldIdParmTable_OrderId
+        #/// <summary>
+        #/// Gets the field ID for the field that contains the order ID in the posting parameter header table.
+        #/// </summary>
+        #/// <returns>
+        #/// A field ID.
+        #/// </returns>
+        #protected FieldId fieldIdParmTable_OrderId()
+        #{
+        #    return formletterProvider.fieldIdParmTable_OrderId();
+        #}
+      ENDSOURCE
+      SOURCE #formletterType
+        #/// <summary>
+        #/// Determines the form letter type.
+        #/// </summary>
+        #/// <returns>
+        #/// A <c>FormletterType</c> enumeration value.
+        #/// </returns>
+        #protected FormletterType formletterType()
+        #{
+        #    return FormletterType::Null;
+        #}
+      ENDSOURCE
+      SOURCE #getJournal
+        #/// <summary>
+        #///   Gets the current journal header.
+        #/// </summary>
+        #/// <returns>
+        #///   A journal header record.
+        #/// </returns>
+        #abstract public Common getJournal()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #getJournalLines
+        #/// <summary>
+        #/// Gets a list that contains every created journal line.
+        #/// </summary>
+        #/// <returns>
+        #/// A list.
+        #/// </returns>
+        #public List getJournalLines()
+        #{
+        #    return listLine;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getJournalNumber
+        #/// <summary>
+        #///   Gets the number of the journal.
+        #/// </summary>
+        #/// <returns>
+        #///   A journal number.
+        #/// </returns>
+        #protected Num getJournalNumber()
+        #{
+        #    return conPeek(this.getNumAndVoucher(),1);
+        #}
+      ENDSOURCE
+      SOURCE #getLineNum
+        #/// <summary>
+        #///   Gets the current journal line number.
+        #/// </summary>
+        #/// <returns>
+        #///   A line number.
+        #/// </returns>
+        #protected LineNum getLineNum()
+        #{
+        #    return lineNum;
+        #}
+      ENDSOURCE
+      SOURCE #getNumAndVoucher
+        #/// <summary>
+        #/// Gets a journal and a voucher number.
+        #/// </summary>
+        #/// <returns>
+        #/// A container that contains a journal and voucher number.
+        #/// </returns>
+        #protected container getNumAndVoucher()
+        #{
+        #    if (!this.proforma() && journalNumber == '')
+        #    {
+        #        numberSeq     = this.allocateNumAndVoucher();
+        #        if (numberSeq)
+        #        {
+        #            if (this.numberSequenceReferenceVoucher())
+        #            {
+        #                [journalNumber, voucher] = numberSeq.numAndVoucher();
+        #            }
+        #            else
+        #            {
+        #                journalNumber = numberSeq.num();
+        #                voucher       = '';
+        #            }
+        #        }
+        #    }
+        #
+        #    return [journalNumber, voucher];
+        #}
+      ENDSOURCE
+      SOURCE #getNumberSeq
+        #/// <summary>
+        #///   Gets a <c>NumberSeq</c> object.
+        #/// </summary>
+        #/// <returns>
+        #///   A <c>NumberSeq</c> object.
+        #/// </returns>
+        #public NumberSeq getNumberSeq()
+        #{
+        #    return numberSeq;
+        #}
+      ENDSOURCE
+      SOURCE #getOrigOrderIdSet
+        #/// <summary>
+        #///   Gets a packed version of a <c>Set</c> object with all original order IDs for the journal.
+        #/// </summary>
+        #/// <returns>
+        #///   A packed version of a <c>Set</c> object.
+        #/// </returns>
+        #public container getOrigOrderIdSet()
+        #{
+        #    return origOrderIdSet.pack();
+        #}
+      ENDSOURCE
+      SOURCE #getTotals
+        #/// <summary>
+        #///   Gets the total object.
+        #/// </summary>
+        #/// <returns>
+        #///   A total object.
+        #/// </returns>
+        #public Object getTotals()
+        #{
+        #    return this.totals();
+        #}
+      ENDSOURCE
+      SOURCE #getVoucher
+        #/// <summary>
+        #///   Gets a voucher number.
+        #/// </summary>
+        #/// <returns>
+        #///   A voucher number.
+        #/// </returns>
+        #protected Num getVoucher()
+        #{
+        #    return conPeek(this.getNumAndVoucher(),2);
+        #}
+      ENDSOURCE
+      SOURCE #init
+        #/// <summary>
+        #///   Initializes the class.
+        #/// </summary>
+        #protected void init()
+        #{
+        #    systemSequence = new systemSequence();
+        #}
+      ENDSOURCE
+      SOURCE #initFormletterProvider
+        #/// <summary>
+        #///   Initializes the <c>FormletterProvider</c> object.
+        #/// </summary>
+        #protected void initFormletterProvider()
+        #{
+        #    formletterProvider = FormletterProvider::newFormletterType(this.formletterType(), this.sourceTable());
+        #    formletterProvider.parmParmUpdate(this.parmParmUpdate());
+        #    formletterProvider.parmTotals(this.totals());
+        #    formletterProvider.parmParmTable(this.parmParmTable());
+        #    formletterProvider.parmDocumentStatus(this.parmDocumentStatus());
+        #    formletterProvider.parmBatchCreatedBy(this.parmBatchCreatedBy());
+        #}
+      ENDSOURCE
+      SOURCE #initJournalHeader
+        #/// <summary>
+        #///   Initializes the journal header record.
+        #/// </summary>
+        #protected void initJournalHeader()
+        #{
+        #
+        #}
+      ENDSOURCE
+      SOURCE #initLoopLines
+        #/// <summary>
+        #/// Initializes the iteration over journal lines.
+        #/// </summary>
+        #protected void initLoopLines()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #initRecordList
+        #/// <summary>
+        #///   Initializes the record lists.
+        #/// </summary>
+        #protected void initRecordList()
+        #{
+        #    // suspend RecId allocation for any tables which will have their RecId's allocated early.
+        #    // RecId's for certain tables get allocated early so that linked tables can use the RecId
+        #    // as a foreign key.
+        #    this.suspendRecIds();
+        #
+        #    if (this.linksTableId())
+        #    {
+        #        recordListLinks = new RecordInsertList(this.linksTableId());
+        #    }
+        #
+        #    //Sales picking list does not create line list
+        #    if (this.journalLineTableId())
+        #    {
+        #        recordListLine = new RecordInsertList(this.journalLineTableId());
+        #        listLine  = new List(Types::Record);
+        #    }
+        #    // <GEERU>
+        #    //Relations between corrected and correcting invoices for Russia
+        #    if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoRU]) && this.journalLineCorrLinksTableId_RU())
+        #    {
+        #        recordListCorrLinks = new RecordInsertList(this.journalLineCorrLinksTableId_RU());
+        #    }
+        #    // </GEERU>
+        #}
+      ENDSOURCE
+      SOURCE #initSourceTable
+        #/// <summary>
+        #///   Initializes the source table record.
+        #/// </summary>
+        #protected void initSourceTable()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #initTotals
+        #/// <summary>
+        #///   Initializes the total calculation.
+        #/// </summary>
+        #abstract protected void initTotals()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #insertJournalLine
+        #/// <summary>
+        #///   Inserts a record in the journal line table.
+        #/// </summary>
+        #/// <param name="_journalLine">
+        #///   The record to insert.
+        #/// </param>
+        #protected void insertJournalLine(Common _journalLine)
+        #{
+        #    if (recordListLine)
+        #    {
+        #        recordListLine.add(_journalLine);
+        #        listLine.addEnd(_journalLine);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #insertJournalLink
+        #/// <summary>
+        #///   Inserts a record in the journal link table.
+        #/// </summary>
+        #/// <param name="_journalLink">
+        #///   The record to insert.
+        #/// </param>
+        #protected void insertJournalLink(Common _journalLink)
+        #{
+        #    if (recordListLinks)
+        #    {
+        #        recordListLinks.add(_journalLink);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #insertRecordList
+        #/// <summary>
+        #///    Inserts records in the record lists into the database.
+        #/// </summary>
+        #protected void insertRecordList()
+        #{
+        #    ttsbegin;
+        #    if (recordListLine)
+        #    {
+        #        recordListLine.insertDatabase();
+        #    }
+        #
+        #    if (recordListLinks)
+        #    {
+        #        recordListLinks.insertDatabase();
+        #    }
+        #
+        #    // <GEERU>
+        #    if (recordListCorrLinks)
+        #    {
+        #        recordListCorrLinks.insertDatabase();
+        #    }
+        #    // </GEERU>
+        #
+        #    this.removeRecIdSuspension();
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #isJournalCreated
+        #/// <summary>
+        #///    Determines whether the journal was created.
+        #/// </summary>
+        #/// <returns>
+        #///    true if the journal was created; otherwise, false.
+        #/// </returns>
+        #protected boolean isJournalCreated()
+        #{
+        #    return lineNum > 0;
+        #}
+      ENDSOURCE
+      SOURCE #journalLineCorrLinksTableId_RU
+        #/// <summary>
+        #///   Gets the table ID for the journal line table correction links.
+        #/// </summary>
+        #/// <returns>
+        #///   The table ID for the journal line table correction links.
+        #/// </returns>
+        #/// <remarks>
+        #///   Overriden for customer and vendor invoices for Russia.
+        #/// </remarks>
+        #// <GEERU>
+        #protected TableId journalLineCorrLinksTableId_RU()
+        #{
+        #    return 0;
+        #}
+        #// </GEERU>
+      ENDSOURCE
+      SOURCE #journalLineTableId
+        #/// <summary>
+        #///   Gets the table ID for the journal line table.
+        #/// </summary>
+        #/// <returns>
+        #///   The table ID for the journal line table.
+        #/// </returns>
+        #abstract protected TableId journalLineTableId()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #linesExists
+        #/// <summary>
+        #/// Indicates whether lines occur in the order line parameter table.
+        #/// </summary>
+        #/// <returns>
+        #/// true if lines exists; otherwise, false.
+        #/// </returns>
+        #protected boolean linesExists()
+        #{
+        #    boolean             ok          = true;
+        #    Common              parmLine    = this.typeParmLine();
+        #    RecordSortedList    list        = this.recordListParmLine();
+        #
+        #    if (list)
+        #    {
+        #        list.first(parmLine);
+        #        if (!parmLine.RecId)
+        #        {//false if no lines exists.
+        #            ok = false;
+        #        }
+        #    }
+        #    return ok;
+        #}
+      ENDSOURCE
+      SOURCE #linksTableId
+        #/// <summary>
+        #///   Gets the table ID for the journal link table.
+        #/// </summary>
+        #/// <returns>
+        #///   The table ID for the journal link table.
+        #/// </returns>
+        #abstract protected TableId linksTableId()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #protected void new()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #noLinesForPosting
+        #/// <summary>
+        #/// Performs actions when there are no lines selected for posting.
+        #/// </summary>
+        #/// <param name="_throwError">
+        #/// A Boolean value that indicates whether the error message should be thrown as an exception.
+        #/// </param>
+        #/// <remarks>
+        #/// Informs the user that there are no lines selected for posting.
+        #/// </remarks>
+        #/// <exception cref="M:Exception::Error">
+        #/// Posting has been canceled.
+        #/// </exception>
+        #protected void noLinesForPosting(boolean _throwError = false)
+        #{
+        #    // Failed for missing lines or quantity of zero
+        #    checkFailed("@SYS26185");
+        #    // Announce posting failed
+        #    this.showPostingCanceledError(_throwError);
+        #}
+      ENDSOURCE
+      SOURCE #numberSequenceReferenceNum
+        #/// <summary>
+        #///   Gets the <c>NumberSequenceReference</c> object for the journal number.
+        #/// </summary>
+        #/// <returns>
+        #///   A <c>NumberSequenceReference</c> object.
+        #/// </returns>
+        #abstract protected NumberSequenceReference numberSequenceReferenceNum()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #numberSequenceReferenceVoucher
+        #/// <summary>
+        #///   Gets the <c>NumberSequenceReference</c> object for the voucher number.
+        #/// </summary>
+        #/// <returns>
+        #///   A <c>NumberSequenceReference</c> object.
+        #/// </returns>
+        #protected NumberSequenceReference numberSequenceReferenceVoucher()
+        #{
+        #    return null;
+        #}
+      ENDSOURCE
+      SOURCE #parmBatchCreatedBy
+        #public UserId parmBatchCreatedBy(UserId _batchCreatedBy = batchCreatedBy)
+        #{
+        #    batchCreatedBy = _batchCreatedBy;
+        #    return batchCreatedBy;
+        #}
+      ENDSOURCE
+      SOURCE #parmCustInvoicePrintoutType_RU
+        #public CustInvoicePrintoutType_RU parmCustInvoicePrintoutType_RU(CustInvoicePrintoutType_RU _printout = CustInvoicePrintoutType_RU::TORG_12)
+        #{
+        #    container dummy()
+        #    {
+        #        return [ _printout ];
+        #    }
+        #
+        #    return CustInvoicePrintoutType_RU::TORG_12;
+        #}
+      ENDSOURCE
+      SOURCE #parmDocumentStatus
+        #public DocumentStatus parmDocumentStatus(DocumentStatus _documentStatus = documentStatus)
+        #{
+        #    documentStatus = _documentStatus;
+        #
+        #    return documentStatus;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmExtraPrintoutLineExists_RU
+        #public boolean parmExtraPrintoutLineExists_RU(boolean _extraPrintoutLineExists = false)
+        #{
+        #    container dummy()
+        #    {
+        #        return [ _extraPrintoutLineExists ];
+        #    }
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #parmFiscalDocType_PL
+        #// <GEEPL>
+        #public PlFiscalDocType parmFiscalDocType_PL(PlFiscalDocType _fiscalDocType = fiscalDocType)
+        #{
+        #    fiscalDocType = _fiscalDocType;
+        #    return fiscalDocType;
+        #}
+        #// </GEEPL>
+      ENDSOURCE
+      SOURCE #parmInBatch
+        #public boolean parmInBatch(boolean _inBatch = inBatch)
+        #{
+        #    inBatch = _inBatch;
+        #    return inBatch;
+        #}
+      ENDSOURCE
+      SOURCE #parmInterCompanyFormletterContract
+        #public FormLetterContract parmInterCompanyFormletterContract(FormLetterContract _interCompanyFormletterContract = interCompanyFormletterContract)
+        #{
+        #    interCompanyFormletterContract = _interCompanyFormletterContract;
+        #    return interCompanyFormletterContract;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmInterCompanyPosted
+        #public InterCompanyPosted parmInterCompanyPosted(InterCompanyPosted _interCompanyPosted = interCompanyPosted)
+        #{
+        #    interCompanyPosted = _interCompanyPosted;
+        #
+        #    return interCompanyPosted;
+        #}
+      ENDSOURCE
+      SOURCE #parmInventLocationId_PL
+        #// <GEEPL>
+        #public InventLocationId parmInventLocationId_PL(
+        #    InventLocationId _inventLocationId = inventLocationId)
+        #{
+        #    inventLocationId = _inventLocationId;
+        #    return inventLocationId;
+        #}
+        #// </GEEPL>
+      ENDSOURCE
+      SOURCE #parmLtDocNumberingCode
+        #// <GEEU>
+        #public LtDocNumberingCode parmLtDocNumberingCode(LtDocNumberingCode _ltDocNumberingCode = ltDocNumberingCode)
+        #{
+        #    ltDocNumberingCode = _ltDocNumberingCode;
+        #    return ltDocNumberingCode;
+        #}
+        #// </GEEU>
+      ENDSOURCE
+      SOURCE #parmMarkupOfTypeCustVendExists_RU
+        #public boolean parmMarkupOfTypeCustVendExists_RU(boolean _markupOfTypeCustVendExists = false)
+        #{
+        #    container dummy()
+        #    {
+        #        return [ _markupOfTypeCustVendExists ];
+        #    }
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #parmParmTable
+        #public Common parmParmTable(Common _parmTable = parmTable)
+        #{
+        #    parmTable = _parmTable;
+        #
+        #    return parmTable;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmParmUpdate
+        #public Common parmParmUpdate(Common _parmUpdate = parmUpdate)
+        #{
+        #    parmUpdate = _parmUpdate;
+        #
+        #    return parmUpdate;
+        #}
+        #
+        #
+      ENDSOURCE
+      SOURCE #parmProforma
+        #public boolean parmProforma(boolean _proforma = proforma)
+        #{
+        #    proforma = _proforma;
+        #
+        #    return proforma;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmRelatedJournal
+        #public Common parmRelatedJournal(Common _relatedJournal = relatedJournal)
+        #{
+        #    relatedJournal = _relatedJournal;
+        #    return relatedJournal;
+        #}
+      ENDSOURCE
+      SOURCE #parmShipmentId
+        #public WMSShipmentId parmShipmentId(WMSShipmentId _shipmentId = shipmentId)
+        #{
+        #    shipmentId = _shipmentId;
+        #
+        #    return shipmentId;
+        #}
+      ENDSOURCE
+      SOURCE #parmTax
+        #protected Tax parmTax(Tax _tax = tax)
+        #{
+        #    tax = _tax;
+        #    return tax;
+        #}
+      ENDSOURCE
+      SOURCE #parmTaxWithholdCalculation_IN
+        #// <GIN>
+        #public TaxWithholdCalculation_IN parmTaxWithholdCalculation_IN(TaxWithholdCalculation_IN _taxWithholdCalculation = taxWithholdCalculation)
+        #{
+        #    taxWithholdCalculation = _taxWithholdCalculation;
+        #    return taxWithholdCalculation;
+        #}
+        #// </GIN>
+      ENDSOURCE
+      SOURCE #proforma
+        #/// <summary>
+        #///   Determines whether the journal is a proforma journal.
+        #/// </summary>
+        #/// <returns>
+        #///   true if the journal is a proforma journal; otherwise, false
+        #/// </returns>
+        #protected boolean proforma()
+        #{
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #recIdSuspensionTables
+        #/// <summary>
+        #/// Gets a list of tables that should have suspended record ID generation.
+        #/// </summary>
+        #/// <returns>
+        #/// A list of table IDs that should have suspended record ID generation.
+        #/// </returns>
+        #protected List recIdSuspensionTables()
+        #{
+        #    return new List(Types::Integer);
+        #}
+      ENDSOURCE
+      SOURCE #recordListParmLine
+        #/// <summary>
+        #/// Gets a <c>RecordSortedList</c> object with every posting parameter line record.
+        #/// </summary>
+        #/// <returns>
+        #/// A <c>RecordSortedList</c> object.
+        #/// </returns>
+        #abstract protected RecordSortedList recordListParmLine()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #removeRecIdSuspension
+        #/// <summary>
+        #/// Removes record ID suspension.
+        #/// </summary>
+        #protected void removeRecIdSuspension()
+        #{
+        #    List            list    = this.recIdSuspensionTables();
+        #    ListEnumerator  le      = list.getEnumerator();
+        #    TableId         tableId;
+        #
+        #    if (!list.empty())
+        #    {
+        #        while (le.moveNext())
+        #        {
+        #            tableId = le.current();
+        #            appl.sysRecIdSequence().removeRecIdSuspension(tableId);
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #run
+        #/// <summary>
+        #///   Creates a journal.
+        #/// </summary>
+        #public void run()
+        #{
+        #    this.createJournal();
+        #}
+      ENDSOURCE
+      SOURCE #showPostingCanceledError
+        #/// <summary>
+        #/// Performs actions when posting is canceled.
+        #/// </summary>
+        #/// <param name="_throwError">
+        #/// A Boolean value that indicates whether the error message should be thrown as an exception.
+        #/// </param>
+        #/// <remarks>
+        #/// Informs the user that posting was not completed.
+        #/// </remarks>
+        #/// <exception cref="M:Exception::Error">
+        #/// Posting has been canceled.
+        #/// </exception>
+        #protected void showPostingCanceledError(boolean _throwError = false)
+        #{
+        #    if (_throwError)
+        #    {
+        #        throw error("@SYS21533");
+        #    }
+        #    else
+        #    {
+        #        error("@SYS21533");
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #sourceTable
+        #/// <summary>
+        #///   Gets the source table for the journal.
+        #/// </summary>
+        #/// <returns>
+        #///   A record.
+        #/// </returns>
+        #abstract protected Common sourceTable()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #suspendRecIds
+        #/// <summary>
+        #/// Suspends record ID generation.
+        #/// </summary>
+        #protected void suspendRecIds()
+        #{
+        #    List            list    = this.recIdSuspensionTables();
+        #    ListEnumerator  le      = list.getEnumerator();
+        #    TableId         tableId;
+        #
+        #    while (le.moveNext())
+        #    {
+        #        tableId = le.current();
+        #        appl.sysRecIdSequence().suspendRecIds(tableId);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #totals
+        #/// <summary>
+        #///   Gets the total object.
+        #/// </summary>
+        #/// <returns>
+        #///   A total object.
+        #/// </returns>
+        #abstract protected Object totals()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #typeParmLine
+        #/// <summary>
+        #///   Gets the type of the posting parameter line table.
+        #/// </summary>
+        #/// <returns>
+        #///   A record.
+        #/// </returns>
+        #abstract protected Common typeParmLine()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #newProjJournalCreate
+        #/// <summary>
+        #/// Creates an instance of the <c>FormletterJournalCreate</c> class by using the <paramref
+        #/// name="_formletter" /> parameter that is used to create journal and journal lines for sales orders.
+        #/// </summary>
+        #/// <param name="_formLetter">
+        #/// The <c>ProjFormletter</c> object that relates to the journal and journal lines.
+        #/// </param>
+        #/// <param name="_projInvoiceParmTable">
+        #/// The <c>ProjInvoiceParmTable</c> record that relates to the journal and journal lines.
+        #/// </param>
+        #/// <returns>
+        #/// An instance of the <c>FormletterJournalCreate</c> class.
+        #/// </returns>
+        #public static FormletterJournalCreate newProjJournalCreate(ProjFormLetter       _formLetter,
+        #                                                           ProjInvoiceParmTable _projInvoiceParmTable)
+        #{
+        #    FormletterJournalCreate     formletterJournalCreate;
+        #
+        #    switch(_formLetter.documentStatus())
+        #    {
+        #        case DocumentStatus::Invoice     : formletterJournalCreate = ProjInvoiceJournalCreate::construct(); break;
+        #
+        #        default : throw error(strFmt("@SYS19306",funcName()));
+        #    }
+        #
+        #    formletterJournalCreate.parmParmTable(_projInvoiceParmTable);
+        #    formletterJournalCreate.parmDocumentStatus(_formLetter.documentStatus());
+        #    formletterJournalCreate.parmProforma(_formLetter.proforma());
+        #    // <GEEU>
+        #    if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoLT, #isoLV]))
+        #    {
+        #        formletterJournalCreate.parmLtDocNumberingCode(_formLetter.parmLtDocNumberingCode());
+        #    }
+        #    // </GEEU>
+        #    return formletterJournalCreate;
+        #}
+      ENDSOURCE
+      SOURCE #newPurchJournalCreate
+        #/// <summary>
+        #///    Creates a new instance of the <c>FormletterJournalCreate</c> class by using the specified form
+        #///    letter to create journal and journal lines for purchase orders.
+        #/// </summary>
+        #/// <param name="_formletterContract">
+        #///    The <c>formletterContract</c> object for which to create journal and journal lines.
+        #/// </param>
+        #/// <param name="_parmTable">
+        #///    The header record that relates to creating journal and journal lines.
+        #/// </param>
+        #/// <returns>
+        #///    An instance of the <c>FormletterJournalCreate</c> class.
+        #/// </returns>
+        #public static FormletterJournalCreate newPurchJournalCreate(PurchFormLetterContract _formletterContract,
+        #                                                            VendDocumentTableMap    _parmTable)
+        #{
+        #    FormletterJournalCreate         formletterJournalCreate;
+        #    PurchInvoiceJournalCreate       purchInvoiceJournalCreate;
+        #    PurchPackingSlipJournalCreate   purchPackingSlipJournalCreate;
+        #    PurchApproveJournalCreate       purchApproveJournalCreate;
+        #    PurchFormLetterApprovalContract purchFormLetterApprovalContract;
+        #    // <GEERU>
+        #    #ISOCountryRegionCodes
+        #    boolean                         countryRegion_RU = SysCountryRegionCode::isLegalEntityInCountryRegion([#isoRU]);
+        #    // </GEERU>
+        #    // <GIN>
+        #    PurchBOEJournalCreate_IN        purchBOEJournalCreate;
+        #    boolean                         countryRegion_IN = SysCountryRegionCode::isLegalEntityInCountryRegion([#isoIN]);
+        #    // </GIN>
+        #    // <GEEPL>
+        #    PurchSADJournalCreate           sadJournalCreate;
+        #    PurchFormLetterSADContract      sadContract;
+        #    // </GEEPL>
+        #    PurchFormLetterInvoiceContract  purchFormLetterInvoiceContract;
+        #    Debug::assert(_parmTable.TableId != tableNum(VendDocumentTableMap));
+        #
+        #    switch(_formletterContract.getDocumentStatus())
+        #    {
+        #
+        #        case DocumentStatus::PurchaseOrder      :   formletterJournalCreate = PurchPurchOrderJournalCreate::construct(); break;
+        #        case DocumentStatus::ReceiptsList       :   formletterJournalCreate = PurchReceiptsListJournalCreate::construct();break;
+        #        case DocumentStatus::PackingSlip        :
+        #            purchPackingSlipJournalCreate = PurchPackingSlipJournalCreate::newFormLetter(_formletterContract);
+        #            purchPackingSlipJournalCreate.parmInterCompanyVoucher(_formletterContract.parmIntercompanyVoucher());
+        #            formletterJournalCreate = purchPackingSlipJournalCreate;
+        #
+        #            // <GEERU>
+        #            if (countryRegion_RU)
+        #            {
+        #                purchPackingSlipJournalCreate.parmProforma(_formletterContract.parmProforma());
+        #                purchPackingSlipJournalCreate.parmPreserveReceiptStatement(_formletterContract.parmPreserveReceiptStatement());
+        #                purchPackingSlipJournalCreate.parmReceiptListDeviationType_RU(_formletterContract.parmReceiptListDeviationType_RU());
+        #            }
+        #            // </GEERU>
+        #
+        #            // <GIN>
+        #            if (TaxParameters::checkTaxParameters_IN())
+        #            {
+        #                purchPackingSlipJournalCreate.printGRN_IN(_formletterContract.parmPrintGRN_IN());
+        #            }
+        #            // </GIN>
+        #
+        #            // <GEEPL>
+        #            if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoPL]))
+        #            {
+        #                purchPackingSlipJournalCreate.parmInventLocationId_PL(_formletterContract.parmInventLocationId_PL());
+        #            }
+        #            // </GEEPL>
+        #
+        #            break;
+        #        // <GEEPL>
+        #        case DocumentStatus::PlSAD              :
+        #            sadJournalCreate = PurchSADJournalCreate::construct();
+        #            sadContract = _formletterContract as PurchFormLetterSADContract;
+        #            sadJournalCreate.parmSADExchRate_PL  (sadContract.parmSADExchRate_PL());
+        #            sadJournalCreate.parmSADNumberCode_PL(sadContract.parmSADNumberCode_PL());
+        #            sadJournalCreate.parmSADContract     (sadContract);
+        #            purchInvoiceJournalCreate = sadJournalCreate;
+        #            // no break; fall through to invoice
+        #        // </GEEPL>
+        #        case DocumentStatus::Invoice            :
+        #        // <GEERU>
+        #        case DocumentStatus::Facture_RU         :
+        #        // </GEERU>
+        #            // <GEEPL>
+        #            if (! purchInvoiceJournalCreate)
+        #            {
+        #            // </GEEPL>
+        #                purchInvoiceJournalCreate = PurchInvoiceJournalCreate::construct();
+        #            // <GEEPL>
+        #            }
+        #            // </GEEPL>
+        #            // <GEERU>
+        #            if (countryRegion_RU)
+        #            {
+        #                purchInvoiceJournalCreate.parmPrintAcceptanceReport_RU      (_formletterContract.parmPrintAcceptanceReport_RU());
+        #                purchInvoiceJournalCreate.parmPrintFacture_RU               (_formletterContract.parmPrintFacture_RU());
+        #                purchInvoiceJournalCreate.parmPrintInventBaileeReport_RU    (_formletterContract.parmPrintInventBaileeReport_RU());
+        #            }
+        #            // </GEERU>
+        #            purchFormLetterInvoiceContract = _formletterContract as PurchFormLetterInvoiceContract;
+        #            purchInvoiceJournalCreate.parmInterCompanyParmId(purchFormLetterInvoiceContract.parmIntercompanyParmId());
+        #            purchInvoiceJournalCreate.parmPrintFormletter(purchFormLetterInvoiceContract.parmPrintFormletter());
+        #            purchInvoiceJournalCreate.parmInterCompanyVoucher(purchFormLetterInvoiceContract.parmIntercompanyVoucher());
+        #            purchInvoiceJournalCreate.parmExecutingPaymentAuthorizationTask(purchFormLetterInvoiceContract.parmExecutingPaymentAuthorizationTask());
+        #            formletterJournalCreate = purchInvoiceJournalCreate;
+        #            break;
+        #        case DocumentStatus::ApproveJournal     :
+        #            purchApproveJournalCreate = PurchApproveJournalCreate::construct();
+        #            purchFormLetterApprovalContract = _formletterContract as PurchFormLetterApprovalContract;
+        #            purchApproveJournalCreate.parmLedgerJournalTrans(purchFormLetterApprovalContract.parmLedgerJournalTrans());
+        #            purchApproveJournalCreate.parmOrigTransDate(purchFormLetterApprovalContract.parmOrigTransDate());
+        #            purchApproveJournalCreate.parmOrigVoucher(purchFormLetterApprovalContract.parmOrigVoucher());
+        #            purchApproveJournalCreate.parmTransDate(purchFormLetterApprovalContract.parmDefaultTransDate());
+        #            purchApproveJournalCreate.parmExecutingPaymentAuthorizationTask(
+        #                purchFormLetterApprovalContract.parmExecutingPaymentAuthorizationTask());
+        #            formletterJournalCreate = purchApproveJournalCreate;
+        #            break;
+        #        // <GEERU>
+        #        case DocumentStatus::Invoice4Paym_RU    :
+        #            if (countryRegion_RU)
+        #            {
+        #                formletterJournalCreate = PurchInvoice4PaymJournalCreate_RU::construct();
+        #            }
+        #            break;
+        #        // </GEERU>
+        #        // <GIN>
+        #        case DocumentStatus::BillOfEntry_IN            :
+        #            if (countryRegion_IN)
+        #            {
+        #                purchBOEJournalCreate = PurchBOEJournalCreate_IN::construct();
+        #                formletterJournalCreate = purchBOEJournalCreate;
+        #            }
+        #            break;
+        #        // </GIN>
+        #        default : throw error(strFmt("@SYS19306", funcName()));
+        #    }
+        #
+        #    formletterJournalCreate.parmParmUpdate(_formletterContract.parmParmUpdate() as PurchParmUpdate);
+        #    formletterJournalCreate.parmParmTable(_parmTable);
+        #    formletterJournalCreate.parmDocumentStatus(_formletterContract.getDocumentStatus());
+        #    formletterJournalCreate.parmInterCompanyPosted(_formletterContract.parmIntercompanyPosted());
+        #    formletterJournalCreate.parmInterCompanyFormletterContract(_formletterContract);
+        #    formletterJournalCreate.parmBatchCreatedBy(_formletterContract.parmBatchCreatedBy());
+        #    // <GEEU>
+        #    if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoLT, #isoLV]))
+        #    {
+        #        formletterJournalCreate.parmLtDocNumberingCode(_formletterContract.parmLtDocNumberingCode());
+        #    }
+        #    // </GEEU>
+        #
+        #    return formletterJournalCreate;
+        #}
+      ENDSOURCE
+      SOURCE #newPurchRFQJournalCreate
+        #/// <summary>
+        #/// Creates an instance of the <c>FormletterJournalCreate</c> class by using the <paramref
+        #/// name="_FormletterContract" /> parameter that is used to create journal and journal lines for
+        #/// request for quotes.
+        #/// </summary>
+        #/// <param name="_formletterContract">
+        #/// The <c>PurchRFQFormLetterContract</c> object that relates to the journal and journal lines.
+        #/// </param>
+        #/// <param name="_purchRFQParmTable">
+        #/// The <c>PurchRFQParmTable</c> record that relates to the journal and journal lines.
+        #/// </param>
+        #/// <returns>
+        #/// An instance of the <c>FormletterJournalCreate</c> class.
+        #/// </returns>
+        #public static FormletterJournalCreate newPurchRFQJournalCreate(PurchRFQFormLetterContract  _formletterContract,
+        #                                                               Common              _purchRFQParmTable)
+        #{
+        #    FormletterJournalCreate     formletterJournalCreate;
+        #    PurchRFQSendJournalCreate   purchRFQSendJournalCreate;
+        #
+        #    switch(_formletterContract.getDocumentStatus())
+        #    {
+        #
+        #        case DocumentStatus::RFQ     :
+        #            purchRFQSendJournalCreate = PurchRFQSendJournalCreate::construct();
+        #            purchRFQSendJournalCreate.parmPrintPriceAmount(_formletterContract.parmPrintPriceAmount());
+        #            purchRFQSendJournalCreate.parmPrintReplySheet(_formletterContract.parmPrintReplySheet());
+        #            formletterJournalCreate = purchRFQSendJournalCreate;
+        #            break;
+        #        case DocumentStatus::RFQAccept :   formletterJournalCreate = PurchRFQAcceptJournalCreate::construct();break;
+        #        case DocumentStatus::RFQReject :   formletterJournalCreate = PurchRFQRejectJournalCreate::construct();break;
+        #        case DocumentStatus::RFQReSend :   formletterJournalCreate = PurchRFQReSendJournalCreate::construct(); break;
+        #        default : throw error(strFmt("@SYS19306",funcName()));
+        #    }
+        #
+        #    formletterJournalCreate.parmParmUpdate(_formletterContract.parmParmUpdate() as PurchRFQParmUpdate);
+        #    formletterJournalCreate.parmParmTable(_purchRFQParmTable);
+        #    return formletterJournalCreate;
+        #}
+      ENDSOURCE
+      SOURCE #newSalesJournalCreate
+        #/// <summary>
+        #/// Creates a <c>FormletterJournalCreate</c> class by using the <c>formletter</c> parameter that is
+        #/// used to create journal and journal lines for sales orders.
+        #/// </summary>
+        #/// <param name="_formletterContract">
+        #/// The <c>SalesFormletterContract</c> object that relates to the journal and journal lines.
+        #/// </param>
+        #/// <param name="_salesParmTable">
+        #/// The <c>SalesParmTable</c> record that relates to the journal and journal lines.
+        #/// </param>
+        #/// <returns>
+        #/// An instance of the <c>FormletterJournalCreate</c> class.
+        #/// </returns>
+        #public static FormletterJournalCreate newSalesJournalCreate(SalesFormLetterContract _formletterContract,
+        #                                                            SalesParmTable          _salesParmTable)
+        #{
+        #    FormletterJournalCreate     formletterJournalCreate;
+        #
+        #    // <GEERU><GIN>
+        #    #ISOCountryRegionCodes
+        #    // </GIN></GEERU>
+        #    // <GEERU>
+        #    boolean                     countryRegion_RU = SysCountryRegionCode::isLegalEntityInCountryRegion([#isoRU]);
+        #    // </GEERU>
+        #    // <GIN>
+        #    boolean                     countryRegion_IN = SysCountryRegionCode::isLegalEntityInCountryRegion([#isoIN]);
+        #    // </GIN>
+        #
+        #    switch(_formletterContract.getDocumentStatus())
+        #    {
+        #
+        #        case DocumentStatus::Confirmation       :   formletterJournalCreate = SalesConfirmJournalCreate::construct(); break;
+        #        case DocumentStatus::PickingList        :   formletterJournalCreate = SalesPickingListJournalCreate::construct();break;
+        #        case DocumentStatus::PackingSlip,
+        #             DocumentStatus::ProjectPackingSlip :   formletterJournalCreate = SalesPackingSlipJournalCreate::newFormLetter(_formletterContract); break;
+        #        case DocumentStatus::Invoice            :
+        #        case DocumentStatus::FreeTextInvoice    :   formletterJournalCreate = SalesInvoiceJournalCreate::construct(); break;
+        #        case DocumentStatus::ProjectInvoice     :   formletterJournalCreate = SalesInvoiceJournalCreateProj::construct(); break;
+        #
+        #        // <GEERU>
+        #        case DocumentStatus::Invoice4Paym_RU    :
+        #            if (countryRegion_RU)
+        #            {
+        #                formletterJournalCreate = SalesInvoice4PaymJournalCreate_RU::construct();
+        #            }
+        #            break;
+        #        case DocumentStatus::Facture_RU         :
+        #            if (countryRegion_RU)
+        #            {
+        #                formletterJournalCreate = SalesInvoiceJournalCreate::construct();
+        #            }
+        #            break;
+        #        // </GEERU>
+        #        // <GIN>
+        #        case DocumentStatus::ShippingBill_IN    :
+        #            if (countryRegion_IN)
+        #            {
+        #                formletterJournalCreate = SalesShippingBillJournalCreate_IN::construct();
+        #            }
+        #            break;
+        #        // </GIN>
+        #
+        #        // <GBR>
+        #        case DocumentStatus::DeliverySlip_BR:
+        #            formletterJournalCreate = SalesPackingSlipJournalCreate::newFormLetter(_formletterContract);
+        #            break;
+        #
+        #        case DocumentStatus::DeliverySlipProject_BR:
+        #            if (BrazilParameters::isEnabled())
+        #            {
+        #                formletterJournalCreate = SalesPackingSlipJournalCreate::newFormLetter(_formletterContract);
+        #            }
+        #            break;
+        #        // </GBR>
+        #
+        #        default : throw error(strFmt("@SYS19306",funcName()));
+        #    }
+        #
+        #    formletterJournalCreate.parmParmUpdate(_formletterContract.parmParmUpdate() as SalesParmUpdate);
+        #    formletterJournalCreate.parmParmTable(_salesParmTable);
+        #    formletterJournalCreate.parmDocumentStatus(_formletterContract.getDocumentStatus());
+        #    formletterJournalCreate.parmInterCompanyPosted(_formletterContract.parmIntercompanyPosted());
+        #    formletterJournalCreate.parmInterCompanyFormletterContract(_formletterContract);
+        #    formletterJournalCreate.parmShipmentId(_formletterContract.parmShipmentId());
+        #    formletterJournalCreate.parmInBatch(_formletterContract.parmBatchJobId() != 0);
+        #    formletterJournalCreate.parmRelatedJournal(_formletterContract.parmRelatedJournal());
+        #
+        #
+        #    // <GEERU>
+        #    if (countryRegion_RU)
+        #    {
+        #        formletterJournalCreate.parmCustInvoicePrintoutType_RU(_formletterContract.parmCustInvoicePrintoutType_RU());
+        #        formletterJournalCreate.parmExtraPrintoutLineExists_RU(_formletterContract.parmExtraPrintoutLineExists_RU());
+        #    }
+        #    // </GEERU>
+        #
+        #    // <GEEPL>
+        #    if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoPL]))
+        #    {
+        #        formletterJournalCreate.parmFiscalDocType_PL   (_formletterContract.parmFiscalDocType_PL());
+        #        formletterJournalCreate.parmInventLocationId_PL(_formletterContract.parmInventLocationId_PL());
+        #    }
+        #    // </GEEPL>
+        #
+        #    // <GEEU>
+        #    if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoLT, #isoLV]))
+        #    {
+        #        formletterJournalCreate.parmLtDocNumberingCode(_formletterContract.parmLtDocNumberingCode());
+        #    }
+        #    // </GEEU>
+        #    return formletterJournalCreate;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

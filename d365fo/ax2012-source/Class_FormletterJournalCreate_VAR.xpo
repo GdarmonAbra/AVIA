@@ -1,0 +1,180 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: FormletterJournalCreate unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #FormletterJournalCreate
+    PROPERTIES
+      Name                #FormletterJournalCreate
+      RunOn               #Server
+      Origin              #{2D170000-0000-1000-5173-0C9D7D78F80D}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #newPurchJournalCreate
+        #/// <summary>
+        #///    Creates a new instance of the <c>FormletterJournalCreate</c> class by using the specified form
+        #///    letter to create journal and journal lines for purchase orders.
+        #/// </summary>
+        #/// <param name="_formletterContract">
+        #///    The <c>formletterContract</c> object for which to create journal and journal lines.
+        #/// </param>
+        #/// <param name="_parmTable">
+        #///    The header record that relates to creating journal and journal lines.
+        #/// </param>
+        #/// <returns>
+        #///    An instance of the <c>FormletterJournalCreate</c> class.
+        #/// </returns>
+        #public static FormletterJournalCreate newPurchJournalCreate(PurchFormLetterContract _formletterContract,
+        #                                                            VendDocumentTableMap    _parmTable)
+        #{
+        #    FormletterJournalCreate         formletterJournalCreate;
+        #    PurchInvoiceJournalCreate       purchInvoiceJournalCreate;
+        #    PurchPackingSlipJournalCreate   purchPackingSlipJournalCreate;
+        #    PurchApproveJournalCreate       purchApproveJournalCreate;
+        #    PurchFormLetterApprovalContract purchFormLetterApprovalContract;
+        #    // <GEERU>
+        #    #ISOCountryRegionCodes
+        #    boolean                         countryRegion_RU = SysCountryRegionCode::isLegalEntityInCountryRegion([#isoRU]);
+        #    // </GEERU>
+        #    // <GIN>
+        #    PurchBOEJournalCreate_IN        purchBOEJournalCreate;
+        #    boolean                         countryRegion_IN = SysCountryRegionCode::isLegalEntityInCountryRegion([#isoIN]);
+        #    // </GIN>
+        #    // <GEEPL>
+        #    PurchSADJournalCreate           sadJournalCreate;
+        #    PurchFormLetterSADContract      sadContract;
+        #    // </GEEPL>
+        #    PurchFormLetterInvoiceContract  purchFormLetterInvoiceContract;
+        #    Debug::assert(_parmTable.TableId != tableNum(VendDocumentTableMap));
+        #
+        #    switch(_formletterContract.getDocumentStatus())
+        #    {
+        #        case DocumentStatus::ConfirmationRequest:   formletterJournalCreate = PurchConfirmationRequestJournalCreate::construct(); break;
+        #        case DocumentStatus::PurchaseOrder      :   formletterJournalCreate = PurchConfirmationJournalCreate::construct(); break;
+        #        case DocumentStatus::ReceiptsList       :   formletterJournalCreate = PurchReceiptsListJournalCreate::construct();break;
+        #        case DocumentStatus::PackingSlip        :
+        #            purchPackingSlipJournalCreate = PurchPackingSlipJournalCreate::newFormLetter(_formletterContract);
+        #            purchPackingSlipJournalCreate.parmInterCompanyVoucher(_formletterContract.parmIntercompanyVoucher());
+        #            formletterJournalCreate = purchPackingSlipJournalCreate;
+        #
+        #            // <GEERU>
+        #            if (countryRegion_RU)
+        #            {
+        #                purchPackingSlipJournalCreate.parmProforma(_formletterContract.parmProforma());
+        #                purchPackingSlipJournalCreate.parmPreserveReceiptStatement(_formletterContract.parmPreserveReceiptStatement());
+        #                purchPackingSlipJournalCreate.parmReceiptListDeviationType_RU(_formletterContract.parmReceiptListDeviationType_RU());
+        #            }
+        #            // </GEERU>
+        #
+        #            // <GIN>
+        #            if (TaxParameters::checkTaxParameters_IN())
+        #            {
+        #                purchPackingSlipJournalCreate.printGRN_IN(_formletterContract.parmPrintGRN_IN());
+        #            }
+        #            // </GIN>
+        #
+        #            // <GEEPL>
+        #            if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoPL]))
+        #            {
+        #                purchPackingSlipJournalCreate.parmInventLocationId_PL(_formletterContract.parmInventLocationId_PL());
+        #            }
+        #            // </GEEPL>
+        #            // 08/04/2013-SSARAGOS-PSS-001-IMPORTFOLDER-BEGIN
+        #            if (isConfigurationkeyEnabled(configurationKeyNum(PSSImpFolder)))
+        #                purchPackingSlipJournalCreate.pssParmImpFolderTableRecId(_formletterContract.pssParmImpFolderTableRecId());
+        #            // 08/04/2013-SSARAGOS-PSS-001-IMPORTFOLDER-END
+        #
+        #            break;
+        #        // <GEEPL>
+        #        case DocumentStatus::PlSAD              :
+        #            sadJournalCreate = PurchSADJournalCreate::construct();
+        #            sadContract = _formletterContract as PurchFormLetterSADContract;
+        #            sadJournalCreate.parmSADExchRate_PL  (sadContract.parmSADExchRate_PL());
+        #            sadJournalCreate.parmSADNumberCode_PL(sadContract.parmSADNumberCode_PL());
+        #            sadJournalCreate.parmSADContract     (sadContract);
+        #            purchInvoiceJournalCreate = sadJournalCreate;
+        #            // no break; fall through to invoice
+        #        // </GEEPL>
+        #        case DocumentStatus::Invoice            :
+        #        // <GEERU>
+        #        case DocumentStatus::Facture_RU         :
+        #        // </GEERU>
+        #            // <GEEPL>
+        #            if (! purchInvoiceJournalCreate)
+        #            {
+        #            // </GEEPL>
+        #                purchInvoiceJournalCreate = PurchInvoiceJournalCreate::construct();
+        #            // <GEEPL>
+        #            }
+        #            // </GEEPL>
+        #            // <GEERU>
+        #            if (countryRegion_RU)
+        #            {
+        #                purchInvoiceJournalCreate.parmPrintAcceptanceReport_RU      (_formletterContract.parmPrintAcceptanceReport_RU());
+        #                purchInvoiceJournalCreate.parmPrintFacture_RU               (_formletterContract.parmPrintFacture_RU());
+        #                purchInvoiceJournalCreate.parmPrintInventBaileeReport_RU    (_formletterContract.parmPrintInventBaileeReport_RU());
+        #            }
+        #            // </GEERU>
+        #            purchFormLetterInvoiceContract = _formletterContract as PurchFormLetterInvoiceContract;
+        #            purchInvoiceJournalCreate.parmInterCompanyParmId(purchFormLetterInvoiceContract.parmIntercompanyParmId());
+        #            purchInvoiceJournalCreate.parmPrintFormletter(purchFormLetterInvoiceContract.parmPrintFormletter());
+        #            purchInvoiceJournalCreate.parmInterCompanyVoucher(purchFormLetterInvoiceContract.parmIntercompanyVoucher());
+        #            purchInvoiceJournalCreate.parmExecutingPaymentAuthorizationTask(purchFormLetterInvoiceContract.parmExecutingPaymentAuthorizationTask());
+        #            formletterJournalCreate = purchInvoiceJournalCreate;
+        #            break;
+        #        case DocumentStatus::ApproveJournal     :
+        #            purchApproveJournalCreate = PurchApproveJournalCreate::construct();
+        #            purchFormLetterApprovalContract = _formletterContract as PurchFormLetterApprovalContract;
+        #            purchApproveJournalCreate.parmLedgerJournalTrans(purchFormLetterApprovalContract.parmLedgerJournalTrans());
+        #            purchApproveJournalCreate.parmOrigTransDate(purchFormLetterApprovalContract.parmOrigTransDate());
+        #            purchApproveJournalCreate.parmOrigVoucher(purchFormLetterApprovalContract.parmOrigVoucher());
+        #            purchApproveJournalCreate.parmTransDate(purchFormLetterApprovalContract.parmDefaultTransDate());
+        #            purchApproveJournalCreate.parmExecutingPaymentAuthorizationTask(
+        #                purchFormLetterApprovalContract.parmExecutingPaymentAuthorizationTask());
+        #            formletterJournalCreate = purchApproveJournalCreate;
+        #            break;
+        #        // <GEERU>
+        #        case DocumentStatus::Invoice4Paym_RU    :
+        #            if (countryRegion_RU)
+        #            {
+        #                formletterJournalCreate = PurchInvoice4PaymJournalCreate_RU::construct();
+        #            }
+        #            break;
+        #        // </GEERU>
+        #        // <GIN>
+        #        case DocumentStatus::BillOfEntry_IN            :
+        #            if (countryRegion_IN)
+        #            {
+        #                purchBOEJournalCreate = PurchBOEJournalCreate_IN::construct();
+        #                formletterJournalCreate = purchBOEJournalCreate;
+        #            }
+        #            break;
+        #        // </GIN>
+        #        default : throw error(strFmt("@SYS19306", funcName()));
+        #    }
+        #
+        #    formletterJournalCreate.parmParmUpdate(_formletterContract.parmParmUpdate() as PurchParmUpdate);
+        #    formletterJournalCreate.parmParmTable(_parmTable);
+        #    formletterJournalCreate.parmDocumentStatus(_formletterContract.getDocumentStatus());
+        #    formletterJournalCreate.parmInterCompanyPosted(_formletterContract.parmIntercompanyPosted());
+        #    formletterJournalCreate.parmInterCompanyFormletterContract(_formletterContract);
+        #    formletterJournalCreate.parmBatchCreatedBy(_formletterContract.parmBatchCreatedBy());
+        #    // <GEEU>
+        #    if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoLT, #isoLV]))
+        #    {
+        #        formletterJournalCreate.parmLtDocNumberingCode(_formletterContract.parmLtDocNumberingCode());
+        #    }
+        #    // </GEEU>
+        #
+        #    return formletterJournalCreate;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

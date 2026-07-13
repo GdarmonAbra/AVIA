@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>PSSFormletterJournalCreate_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// Chain-of-Command extension of <c>FormletterJournalCreate</c>.
+/// Upgraded from the AX 2012 VAR-layer overlayering of <c>newPurchJournalCreate</c>
+/// (marker: 08/04/2013-SSARAGOS-PSS-001-IMPORTFOLDER).
+/// </summary>
+[ExtensionOf(classStr(FormletterJournalCreate))]
+final class PSSFormletterJournalCreate_Extension
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>newPurchJournalCreate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Carries the PSS import folder reference from the posting contract onto the
+    /// packing slip journal creation class.
+    /// </summary>
+    /// <param name = "_formletterContract">The purchase form letter posting contract.</param>
+    /// <param name = "_parmTable">The posting parameter header record.</param>
+    /// <returns>The <c>FormletterJournalCreate</c> instance built by the standard chain.</returns>
+    public static FormletterJournalCreate newPurchJournalCreate(
+        PurchFormLetterContract _formletterContract,
+        VendDocumentTableMap    _parmTable)
+    {
+        FormletterJournalCreate formletterJournalCreate = next newPurchJournalCreate(_formletterContract, _parmTable);
+
+        // PSS-001 IMPORTFOLDER (AX 2012 VAR): only relevant when a packing slip journal is being created.
+        if (isConfigurationkeyEnabled(configurationKeyNum(PSSImpFolder)))
+        {
+            PurchPackingSlipJournalCreate purchPackingSlipJournalCreate = formletterJournalCreate as PurchPackingSlipJournalCreate;
+
+            if (purchPackingSlipJournalCreate)
+            {
+                purchPackingSlipJournalCreate.pssParmImpFolderTableRecId(_formletterContract.pssParmImpFolderTableRecId());
+            }
+        }
+
+        return formletterJournalCreate;
+    }
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>
