@@ -1,0 +1,620 @@
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סריקת ChainDrop - vm</title>
+<style>
+  :root{
+    --cream:#fcf9f5;
+    --navy:#121f3f;
+    --orange:#ff7748;
+    --amber:#b8860b;
+    --amber-bg:#fdf6e3;
+    --green:#1a7f5a;
+    --red:#b3261e;
+    --line:#dcd5cc;
+    --muted:#5c6478;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--navy);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,"Helvetica Neue",sans-serif;
+    line-height:1.75;
+    font-size:16px;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 22px 70px;}
+  .ltr{direction:ltr;unicode-bidi:isolate;display:inline-block;}
+  code,.mono{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    direction:ltr;unicode-bidi:isolate;display:inline-block;
+    background:#f2ece4;border:1px solid var(--line);border-radius:4px;
+    padding:1px 5px;font-size:0.9em;
+  }
+  header.head{border-bottom:3px solid var(--orange);padding-bottom:18px;margin-bottom:26px;}
+  .wordmark{
+    font-size:30px;font-weight:800;letter-spacing:-0.5px;
+    color:var(--navy);direction:ltr;unicode-bidi:isolate;display:inline-block;
+  }
+  .wordmark span{color:var(--orange);}
+  h1{font-size:25px;margin:14px 0 6px;line-height:1.3;}
+  h2{
+    font-size:19px;margin:38px 0 12px;padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  h3{font-size:16px;margin:22px 0 8px;}
+  .meta{color:var(--muted);font-size:14px;margin:0;}
+  .classif{
+    display:inline-block;background:var(--navy);color:var(--cream);
+    font-size:12px;font-weight:700;padding:3px 10px;border-radius:3px;margin-top:10px;
+  }
+  .sendbox{
+    background:#fff;border:1px solid var(--line);border-right:5px solid var(--orange);
+    border-radius:6px;padding:16px 18px;margin:22px 0;
+  }
+  a#sendBtn{
+    display:inline-block;background:var(--orange);color:#fff;text-decoration:none;
+    font-weight:700;padding:10px 22px;border-radius:5px;font-size:16px;
+  }
+  .sendbox .alt{display:block;margin-top:10px;font-size:14px;color:var(--muted);}
+  .headline{
+    border-radius:8px;padding:22px 24px;margin:24px 0;
+    background:var(--amber-bg);border:1px solid #e6d9a8;border-right:7px solid var(--amber);
+  }
+  .headline .big{font-size:23px;font-weight:800;color:var(--amber);line-height:1.35;}
+  .headline .rests{margin-top:12px;font-size:15px;color:var(--navy);}
+  .kpis{display:flex;flex-wrap:wrap;gap:14px;margin:22px 0;}
+  .kpi{
+    flex:1 1 190px;background:#fff;border:1px solid var(--line);
+    border-radius:7px;padding:15px 17px;
+  }
+  .kpi .n{font-size:29px;font-weight:800;color:var(--navy);direction:ltr;unicode-bidi:isolate;}
+  .kpi .l{font-size:13px;color:var(--muted);margin-top:3px;}
+  .kpi.warn .n{color:var(--amber);}
+  .scroll{overflow-x:auto;margin:14px 0;}
+  table{border-collapse:collapse;width:100%;background:#fff;font-size:14.5px;min-width:640px;}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:right;vertical-align:top;}
+  th{background:#f2ece4;font-weight:700;font-size:13.5px;}
+  tbody tr:nth-child(even){background:#fbf8f4;}
+  .sev{font-weight:700;white-space:nowrap;}
+  .sev-med{color:var(--amber);}
+  .sev-info{color:var(--muted);}
+  .empty{
+    background:#fff;border:1px dashed var(--line);border-radius:6px;
+    padding:16px;color:var(--muted);font-size:14.5px;
+  }
+  .note{
+    background:#fff;border:1px solid var(--line);border-right:4px solid var(--navy);
+    border-radius:5px;padding:13px 16px;margin:14px 0;font-size:14.5px;
+  }
+  .warnbox{
+    background:#fdecea;border:1px solid #f2c4bf;border-right:7px solid var(--red);
+    border-radius:7px;padding:17px 19px;margin:20px 0;
+  }
+  .warnbox strong{color:var(--red);}
+  ol.timeline{padding-right:20px;margin:14px 0;}
+  ol.timeline li{margin-bottom:12px;}
+  ol.timeline li.hot{
+    background:#fdf6e3;border-right:4px solid var(--amber);
+    padding:11px 14px;border-radius:5px;list-style-position:inside;
+  }
+  ul.tight{padding-right:22px;margin:9px 0;}
+  ul.tight li{margin-bottom:7px;}
+  .summary{
+    background:var(--navy);color:#eef1f6;border-radius:7px;padding:17px 19px;
+    direction:ltr;unicode-bidi:isolate;overflow-x:auto;
+  }
+  .summary pre{
+    margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13.5px;line-height:1.65;white-space:pre;
+  }
+  .deffn{font-size:14px;color:var(--muted);margin:5px 0 0;}
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- 1. HEADER -->
+<header class="head">
+  <div class="wordmark">abra<span>.</span></div>
+  <h1>דוח סריקת חשיפה - ChainDrop / keyv (מתקפת שרשרת אספקה ב-npm)</h1>
+  <p class="meta">
+    זמן סריקה: <span class="ltr">2026-08-10 14:20 UTC</span> &nbsp;|&nbsp;
+    מכונה: <span class="ltr">vm</span> &nbsp;|&nbsp;
+    מפעיל: <span class="ltr">root</span> (<span class="ltr">gdarmon@abra-it.com</span>)
+  </p>
+  <p class="meta">נוהל: <span class="ltr">ChainDrop keyv scan v2</span> - סריקה לקריאה בלבד, ללא תיקון וללא שינוי קבצים.</p>
+  <div class="classif">פנימי - אבטחת מידע</div>
+</header>
+
+<!-- 2. SEND CONTROL -->
+<h2>שליחת הדוח</h2>
+<div class="sendbox">
+  <a id="sendBtn" href="#">שלח לבדיקה</a>
+  <span class="alt">
+    או שלחו ידנית ל-<span class="ltr">support@abra-it.com</span>
+  </span>
+  <span class="alt">
+    <strong>אופן השימוש:</strong> לחצו על הכפתור, ולאחר מכן גררו את קובץ ה-<span class="ltr">HTML</span> הזה אל תוך הטיוטה שנפתחת.
+    הכפתור אינו עושה דבר אם לא מוגדרת במכונה תוכנת דואר ברירת מחדל - במקרה כזה השתמשו בכתובת שלמעלה.
+  </span>
+</div>
+<script>
+document.getElementById('sendBtn').addEventListener('click', function(e){
+  e.preventDefault();
+  var body =
+    'דוח סריקת ChainDrop\n\n' +
+    'מכונה: vm\n' + 'משתמש: root\n' + 'זמן: 2026-08-10 14:20 UTC\n' +
+    'מאגרים שנסרקו: 1\n' + 'ממצאים: 1\n\n' +
+    'מסקנה: FINDINGS - לא נמצאה עדות לחשיפה ל-ChainDrop. נמצא ממצא מבני אחד בצינור ה-CI. הכיסוי חלקי.\n\n' +
+    'הדוח המלא מצורף כקובץ HTML.';
+  window.location.href = 'mailto:support@abra-it.com'
+    + '?subject=' + encodeURIComponent('סריקת ChainDrop - vm - FINDINGS (חשיפה מבנית, ללא הדבקה)')
+    + '&body=' + encodeURIComponent(body);
+});
+</script>
+
+<!-- 3. HEADLINE -->
+<h2>מסקנה ראשית</h2>
+<div class="headline">
+  <div class="big">
+    לא נמצאה עדות לחשיפה ל-ChainDrop בהיקף שנסרק. הכיסוי חלקי, ולכן אין לקרוא את הדוח כאישור לכל הסביבה.
+  </div>
+  <div class="rests">
+    המסקנה נשענת על שלוש עדויות ישירות: כל גרסאות משפחת <span class="ltr">keyv</span> שנמצאו על המכונה קדומות לגרסאות הזדוניות
+    (<span class="ltr">keyv@4.5.4</span>, <span class="ltr">flat-cache@4.0.1</span>, <span class="ltr">file-entry-cache@8.0.0</span>);
+    במחסן המקומי של <span class="ltr">npm</span> לא הורדה מעולם חבילה זדונית מהמשפחה; ולא נמצא אף אחד מסימני ההיכרות של הנוזקה על הדיסק.
+    נסרק מאגר אחד - <span class="ltr">GdarmonAbra/AVIA</span> ב-<span class="ltr">GitHub</span>, בחשבון פרטי (לא ארגון).
+    נמצא ממצא מבני אחד: צינור ה-<span class="ltr">CI</span> מתקין תלויות בלי <code>--ignore-scripts</code>. זו חשיפה עומדת, לא הדבקה.
+  </div>
+</div>
+<p class="deffn">
+  הסבר מונחים: <strong>שרשרת אספקה</strong> - תקיפה שמחדירה קוד זדוני לחבילת קוד פתוח שאנחנו מתקינים, במקום לתקוף אותנו ישירות.
+  <strong>תלות טרנזיטיבית</strong> - חבילה שלא ביקשנו במפורש, אלא נגררת פנימה על ידי חבילה אחרת שכן ביקשנו.
+  <strong>קובץ נעילה</strong> (<span class="ltr">lockfile</span>) - קובץ שמקבע את הגרסה המדויקת של כל תלות.
+  <strong>וו התקנה</strong> (<span class="ltr">install hook</span>) - פקודה שרצה אוטומטית בזמן התקנת חבילה; זהו מסלול ההרצה של הנוזקה הזו.
+</p>
+
+<!-- 4. KPI -->
+<h2>מדדים עיקריים</h2>
+<div class="kpis">
+  <div class="kpi"><div class="n">1</div><div class="l">פרויקטים שנסרקו</div></div>
+  <div class="kpi warn"><div class="n">1</div><div class="l">ממצאים (מבני, לא הדבקה)</div></div>
+  <div class="kpi"><div class="n">0</div><div class="l">ריצות <span class="ltr">CI</span> בחלון התקיפה</div></div>
+  <div class="kpi warn"><div class="n">10.9.7</div><div class="l">גרסת <span class="ltr">npm</span> (מתחת ל-12: ווי התקנה פעילים)</div></div>
+</div>
+<div class="note">
+  <strong>גרסת <span class="ltr">npm</span> היא קובעת מרכזית לחשיפה.</strong>
+  מגרסה <span class="ltr">12</span> ואילך <span class="ltr">npm</span> מנטרל ווי התקנה כברירת מחדל ומאיין את הנוזקה לחלוטין.
+  במכונה הזו מותקנת <span class="ltr">npm 10.9.7</span>, כלומר ווי ההתקנה <strong>פעילים</strong> והמכונה אינה מוגנת מבנית.
+  ההיעדר של הדבקה כאן נובע מכך שלא הורדה חבילה זדונית - לא מכך שהרצת הווים חסומה.
+</div>
+
+<!-- 5. FINDINGS -->
+<h2>טבלת ממצאים</h2>
+<div class="scroll">
+<table>
+  <thead>
+    <tr>
+      <th>מזהה</th><th>מקום</th><th>וקטור</th><th>עדות</th><th>תאריך</th><th>חומרה</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono">F-01</td>
+      <td><span class="ltr">.github/workflows/ci.yml</span><br>שורות <span class="ltr">27</span> ו-<span class="ltr">49</span></td>
+      <td><span class="ltr">V7</span> - צינור <span class="ltr">CI/CD</span></td>
+      <td>
+        שני שלבי התקנה מריצים <code>pnpm install --frozen-lockfile=false</code> ללא <code>--ignore-scripts</code>.
+        <span class="ltr">pnpm</span> מקובע לגרסה <span class="ltr">9.12.0</span> דרך <span class="ltr">pnpm/action-setup@v4</span>, וגרסה זו מריצה ווי התקנה כברירת מחדל.
+        בנוסף, <code>--frozen-lockfile=false</code> מתיר שכתוב של קובץ הנעילה, כך שפתרון התלויות עשוי לצוף לגרסה חדשה יותר מזו שקובעה.
+        שילוב שני הדברים הוא בדיוק מסלול ההרצה שהנוזקה מנצלת.
+        הרחבת ההשלכה: העבודה <span class="ltr">live-smoke</span> חושפת את הסודות
+        <span class="ltr">ANTHROPIC_API_KEY</span> ו-<span class="ltr">ADO_ORG</span> לאותו תהליך שבו רצה ההתקנה.
+      </td>
+      <td><span class="ltr">2026-04-24</span><br>(מועד יצירת הקובץ)</td>
+      <td class="sev sev-med">בינונית</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div class="note">
+  <strong>מה הממצא הזה אינו.</strong> אין זו הדבקה, ואין עדות שהנוזקה נגעה בצינור הזה: לא הייתה אף ריצת
+  <span class="ltr">CI</span> בחלון התקיפה (<span class="ltr">2026-08-04</span> עד <span class="ltr">2026-08-06</span>), ומאגר הקוד עצמו
+  אינו תלוי כלל באף חבילה מהמשפחה הנגועה. זו חשיפה מבנית עומדת - הצינור היה מריץ קוד זדוני אילו חבילה כזו הייתה נכנסת לגרף התלויות.
+  לפי הנוהל, זהו סוג הממצא היחיד שהתגלה כממצא אמיתי ב-<span class="ltr">23</span> הסריקות שבוצעו באברא.
+</div>
+
+<!-- 6. CLEARED -->
+<h2>נבדק ונשלל</h2>
+<p>כל התאמה לתבנית חיפוש שנפתרה כסיבה שפירה, עם ההנמקה. זהו החלק שמאפשר ביקורת על הדוח.</p>
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th>ההתאמה</th><th>וקטור</th><th>הסיבה השפירה וההנמקה</th><th>בסיס האימות</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="ltr">keyv@4.5.4</span>, <span class="ltr">flat-cache@4.0.1</span>, <span class="ltr">file-entry-cache@8.0.0</span></td>
+      <td><span class="ltr">V1</span></td>
+      <td>
+        שלוש החבילות יושבות תחת <span class="ltr">eslint@10.1.0</span> הגלובלי, בשרשרת הקנונית
+        <span class="ltr">eslint -&gt; file-entry-cache -&gt; flat-cache -&gt; keyv</span>.
+        אף אחת מהגרסאות אינה ברשימת הגרסאות הזדוניות
+        (<span class="ltr">6.0.0</span> / <span class="ltr">6.1.24</span> / <span class="ltr">11.1.6</span> בהתאמה).
+        זמן הכתיבה של שלושתן הוא <span class="ltr">2026-03-31 13:31:13 UTC</span> - כארבעה חודשים לפני התקיפה.
+      </td>
+      <td>קריאת <span class="ltr">package.json</span> המותקן כאמת קרקע, והצלבה מול הרשימה הרשמית של <span class="ltr">Wiz</span></td>
+    </tr>
+    <tr>
+      <td><code>"preinstall"</code> ב-<span class="ltr">yarn@1.22.22</span></td>
+      <td><span class="ltr">V2</span></td>
+      <td>
+        תוכן הוו הוא <code>:; (node ./preinstall.js &gt; /dev/null 2&gt;&amp;1 || true)</code> -
+        בדיקת השפיות המקורית של <span class="ltr">yarn classic</span>, המצורפת לחבילה עצמה.
+        החתימה הזדונית היא <code>node setup.mjs</code> בלבד, ולא עצם קיומו של וו.
+      </td>
+      <td>בדיקת תוכן, לא בדיקת שם</td>
+    </tr>
+    <tr>
+      <td><span class="ltr">/router</span> בקוד המאגר</td>
+      <td><span class="ltr">V7</span></td>
+      <td>
+        שתי ההתאמות הן <span class="ltr">packages/orchestrator/src/router.ts</span> והבדיקה שלו -
+        מודול הניתוב הפנימי של הפרויקט. הווקטור מחפש בקשת <span class="ltr">POST</span> לנתיב <span class="ltr">/router</span>
+        ביומני צינור, ולא שם קובץ בקוד המקור.
+      </td>
+      <td>קריאת הקוד; אין קשר לתעבורת רשת</td>
+    </tr>
+    <tr>
+      <td>קבצי וו של <span class="ltr">Claude Code</span> תחת <span class="ltr">/root/.claude/</span></td>
+      <td><span class="ltr">V4</span></td>
+      <td>
+        קיימים הקבצים <span class="ltr">session-start-git-identity.sh</span>, <span class="ltr">stop-hook-git-check.sh</span>
+        ו-<span class="ltr">stop-hook-reply-gate.py</span>. הם נוצרו בזמן הקמת המכולה
+        (<span class="ltr">2026-08-10 14:11</span>), הם חלק מתמונת הפלטפורמה המנוהלת, ואינם מוצהרים באף
+        <span class="ltr">settings.json</span> בהיקף שנסרק. הווקטור <span class="ltr">V4</span> עוסק בהרצה שנגרמת מפתיחת תיקיית פרויקט,
+        ואינו חל עליהם. אף אחד מהם אינו מריץ <code>node setup.mjs</code>.
+      </td>
+      <td>בדיקת מקור, תאריך ותוכן; גילוי מלא לשקיפות</td>
+    </tr>
+    <tr>
+      <td>שני קומיטים מאת <span class="ltr">Claude &lt;noreply@anthropic.com&gt;</span></td>
+      <td><span class="ltr">V5</span></td>
+      <td>
+        זו הצורה <strong>הלגיטימית</strong> של החתימה. הצורה המזויפת היא
+        <span class="ltr">claude@users.noreply.github.com</span> בלבד, והיא לא נמצאה באף קומיט.
+        הנוהל אוסר במפורש לדווח על הצורה הלגיטימית כממצא.
+      </td>
+      <td>השוואת כתובת הדואר המדויקת בכל הקומיטים, לא רק בחלון</td>
+    </tr>
+    <tr>
+      <td>קיום <span class="ltr">bun</span> על המכונה</td>
+      <td><span class="ltr">V3</span></td>
+      <td>
+        מותקן <span class="ltr">bun 1.3.11</span> ב-<span class="ltr">/root/.bun/bin/bun</span>, בינארי מתוארך
+        <span class="ltr">2026-03-18</span>. השלב השני של הנוזקה מוריד דווקא
+        <span class="ltr">bun 1.3.13</span>; גרסאות אחרות אינן הנוזקה הזו.
+        לא נמצאו עקבות הורדה: <span class="ltr">/tmp/bun-dl-*</span> אינו קיים.
+      </td>
+      <td>השוואת גרסה ותאריך בינארי</td>
+    </tr>
+    <tr>
+      <td>זמן שינוי של <span class="ltr">pnpm-lock.yaml</span>: <span class="ltr">2026-08-10</span></td>
+      <td><span class="ltr">V1</span></td>
+      <td>
+        התאריך עלול להיראות חשוד משום שהוא עדכני, אך הוא משקף את שעת השִבטוט
+        (<span class="ltr">git clone</span>) של המכולה בתחילת הסשן, ולא פתרון תלויות.
+        ההוכחה: לא קיים כלל <span class="ltr">node_modules</span> בתוך המאגר, כלומר לא הורצה בו התקנה מעולם.
+      </td>
+      <td>הצלבת זמן שינוי מול היעדר עץ תלויות מותקן</td>
+    </tr>
+    <tr>
+      <td>תבניות שפירות מוכרות שלא נמצאו כלל</td>
+      <td><span class="ltr">V3</span></td>
+      <td>
+        <span class="ltr">setup.mjs</span> תחת <span class="ltr">motion-dom</span> ו-<span class="ltr">Math_Symbol.js</span> תחת
+        <span class="ltr">regenerate-unicode-properties</span> - שתי ההתאמות השפירות שהנוהל מזהיר מפניהן -
+        אינן קיימות על המכונה כלל, משום שאין בה <span class="ltr">Cursor</span> ואין בעץ הגלובלי
+        <span class="ltr">babel</span> או <span class="ltr">core-js</span>. לא נדרש סינון בפועל.
+      </td>
+      <td>חיפוש שם קובץ בכל היקף האינדקס</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 7. ACTIONS -->
+<h2>פעולות נדרשות</h2>
+<p>
+  הפעולות נגזרות מהממצאים בפועל. לא נוצרה פעולה עבור וקטור נקי.
+  מכיוון שהממצא היחיד הוא מבני ואין עדות להדבקה, הפעולה הנדרשת היא תיקון הצינור - ולא תגובת אירוע.
+</p>
+
+<h3>נגזר מ-<span class="ltr">F-01</span> - חשיפה מבנית בצינור</h3>
+<ul class="tight">
+  <li>הוסיפו <code>--ignore-scripts</code> לשני שלבי ההתקנה ב-<span class="ltr">ci.yml</span> (שורות <span class="ltr">27</span> ו-<span class="ltr">49</span>), כך שווי התקנה לא ירוצו על סוכן הבנייה.</li>
+  <li>החליפו <code>--frozen-lockfile=false</code> ב-<code>--frozen-lockfile</code>, כדי שקובץ הנעילה יהיה מחייב ופתרון התלויות לא יצוף לגרסאות חדשות מאלו שקובעו.</li>
+  <li>שקלו לצמצם את הסודות בעבודת <span class="ltr">live-smoke</span>, או להפריד את שלב ההתקנה מהשלב שנחשף ל-<span class="ltr">ANTHROPIC_API_KEY</span>.</li>
+  <li>הפעולות האלה הן שינויי קוד בסמכות בעל המאגר. הן <strong>לא</strong> בוצעו בסריקה הזו, שהיא לקריאה בלבד.</li>
+</ul>
+
+<h3>רצף תגובת האירוע - חל רק אם תאושר הדבקה בעתיד</h3>
+<p>
+  ברצף הזה <strong>אין</strong> צורך כרגע: לא אושרה חשיפה באף אחד מהוקטורים.
+  הוא מובא כאן כדי שיהיה זמין ובסדר הנכון אם סריקה עתידית, או מכונה אחרת בצי, כן תעלה הדבקה.
+</p>
+<div class="warnbox">
+  <strong>אזהרה מכרעת:</strong> החלפת אישור כלשהו לפני שהושלם שלב <span class="ltr">2</span> מפעילה את מנגנון הצופה של הנוזקה.
+  הנוזקה סורקת את <span class="ltr">API</span> של <span class="ltr">GitHub</span> כל <span class="ltr">60</span> שניות עם האסימון הגנוב,
+  וכאשר האסימון מתחיל להחזיר שגיאות <span class="ltr">4xx</span> היא מריצה מטען שנשלט על ידי התוקף.
+  <strong>ביטול האישור הוא הטריגר.</strong> שלב <span class="ltr">2</span> קודם לשלב <span class="ltr">3</span>, בלי יוצא מן הכלל.
+</div>
+<ol class="timeline">
+  <li><strong>הקפאה</strong> - עצירת כל צינור שמתקין תלויות.</li>
+  <li class="hot"><strong>הסרת הצופה</strong> - מחיקת ממצאי <span class="ltr">V3</span>, יחידת ההתמדה וווי <span class="ltr">V4</span>.
+    חייב להסתיים <strong>לפני</strong> שלב <span class="ltr">3</span>.</li>
+  <li><strong>החלפת אישורים</strong> - <span class="ltr">npm</span>, מערכת ניהול הקוד, ענן, סודות <span class="ltr">CI</span>, ומפתחות <span class="ltr">API</span> של בינה מלאכותית.</li>
+  <li><strong>גלגול לאחור</strong> - החזרה לגרסה קודמת, לא שדרוג. קיבוע גרסאות מדויק, ובנייה מחדש של קובצי נעילה לפי גיבוב שלמות.</li>
+  <li><strong>בנייה מחדש</strong> - כל מכונה שהתקינה חבילה נגועה נבנית מחדש, לא מנוקה.</li>
+  <li><strong>אימות</strong> - הרצה חוזרת של הסריקה ותיעוד התוצאה.</li>
+</ol>
+
+<!-- 8. COVERAGE -->
+<h2>כיסוי ונתוני גלם</h2>
+
+<h3>זהות המכונה</h3>
+<div class="scroll">
+<table>
+  <tbody>
+    <tr><th>שם מכונה</th><td><span class="ltr">vm</span> (מכולת ענן זמנית, לא עמדת עבודה)</td></tr>
+    <tr><th>משתמש</th><td><span class="ltr">root</span></td></tr>
+    <tr><th>מערכת הפעלה</th><td><span class="ltr">Ubuntu 24.04.4 LTS (Noble Numbat)</span>, ליבה <span class="ltr">Linux 6.18.5-fc-v20</span></td></tr>
+    <tr><th><span class="ltr">node</span></th><td><span class="ltr">v22.22.2</span></td></tr>
+    <tr><th><span class="ltr">npm</span></th><td><span class="ltr">10.9.7</span> - מתחת ל-<span class="ltr">12</span>, ווי התקנה פעילים</td></tr>
+    <tr><th>מנהלי חבילות נוספים</th><td>
+      <span class="ltr">yarn 1.22.22</span>,
+      <span class="ltr">pnpm 9.12.0</span> (בעץ הגלובלי קיימת גם <span class="ltr">pnpm@10.33.0</span> דרך <span class="ltr">corepack 0.34.6</span>),
+      <span class="ltr">bun 1.3.11</span>
+    </td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>מדדי כיסוי</h3>
+<ul class="tight">
+  <li>תיקיות פרויקט שאותרו: <span class="ltr">1</span> (<span class="ltr">/home/user/AVIA</span>)</li>
+  <li>מאגרים שנסרקו: <span class="ltr">1</span> מתוך <span class="ltr">1</span> שנמצא על הדיסק</li>
+  <li>קובצי נעילה שנותחו: <span class="ltr">1</span> (<span class="ltr">pnpm-lock.yaml</span>, <span class="ltr">lockfileVersion 9.0</span>, <span class="ltr">207</span> חבילות מפוענחות)</li>
+  <li>קובצי הצהרה (<span class="ltr">package.json</span>) שנותחו: <span class="ltr">10</span></li>
+  <li>עצי <span class="ltr">node_modules</span> שנבדקו: <span class="ltr">1</span> גלובלי (<span class="ltr">/opt/node22/lib/node_modules</span>) ובתוכו כל התתי-עצים. <strong>במאגר עצמו אין <span class="ltr">node_modules</span> - מעולם לא הורצה בו התקנה.</strong></li>
+  <li>האינדקס הושלם <strong>בלי שגיאות הרשאה</strong> (הסריקה רצה כ-<span class="ltr">root</span>)</li>
+  <li>קובצי הצהרה או נעילה שלא ניתן היה לקרוא: <span class="ltr">0</span></li>
+</ul>
+
+<h3>חבילות גלובליות מותקנות</h3>
+<p class="mono" style="white-space:normal;padding:11px 13px;background:#fff;">
+@anthropic-ai/claude-code@2.1.42 &nbsp; chromedriver@147.0.0 &nbsp; corepack@0.34.6 &nbsp; eslint@10.1.0 &nbsp;
+http-server@14.1.1 &nbsp; nodemon@3.1.14 &nbsp; npm@10.9.7 &nbsp; playwright@1.56.1 &nbsp; pnpm@10.33.0 &nbsp;
+prettier@3.8.1 &nbsp; serve@14.2.6 &nbsp; ts-node@10.9.2 &nbsp; typescript@6.0.2 &nbsp; yarn@1.22.22
+</p>
+
+<h3>ערכי עדות - גרסאות משפחת החבילות</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>חבילה</th><th>גרסה שנמצאה</th><th>עותקים</th><th>מקום</th><th>הגרסה הזדונית</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ltr">keyv</span></td><td><span class="ltr">4.5.4</span></td><td><span class="ltr">1</span></td><td><span class="ltr">eslint/node_modules/keyv</span></td><td><span class="ltr">6.0.0</span></td></tr>
+    <tr><td><span class="ltr">flat-cache</span></td><td><span class="ltr">4.0.1</span></td><td><span class="ltr">1</span></td><td><span class="ltr">eslint/node_modules/flat-cache</span></td><td><span class="ltr">6.1.24</span></td></tr>
+    <tr><td><span class="ltr">file-entry-cache</span></td><td><span class="ltr">8.0.0</span></td><td><span class="ltr">1</span></td><td><span class="ltr">eslint/node_modules/file-entry-cache</span></td><td><span class="ltr">11.1.6</span></td></tr>
+    <tr><td><span class="ltr">cacheable</span>, <span class="ltr">@cacheable/*</span>, <span class="ltr">cacheable-request</span>, <span class="ltr">cache-manager</span>, <span class="ltr">ecto</span>, <span class="ltr">@keyv/*</span></td><td>לא נמצאו</td><td><span class="ltr">0</span></td><td>-</td><td>-</td></tr>
+    <tr><td>מתחמים חשודים: <span class="ltr">@ornikar</span>, <span class="ltr">@deliveroo</span>, <span class="ltr">@onereach</span>, <span class="ltr">@or-sdk</span>, <span class="ltr">@arv-bedrock</span>, <span class="ltr">@servicetitan</span>, <span class="ltr">@qlik</span>, <span class="ltr">@adminide-stack</span></td><td>לא נמצאו</td><td><span class="ltr">0</span></td><td>-</td><td>-</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="note">
+  <strong>הערה על טווחי גרסאות.</strong> הנוהל מזהיר שאין להסיק ממבנה הטווח שפרויקט מוגן.
+  לכן נבדקה הגרסה המפוענחת בפועל ולא ההצהרה. בנוסף, מאגר <span class="ltr">AVIA</span> אינו תלוי כלל ב-<span class="ltr">eslint</span>
+  או ב-<span class="ltr">stylelint</span> (פקודת ה-<span class="ltr">lint</span> שלו היא <code>tsc -b --noEmit</code>), ולכן גרף התלויות שלו
+  בן <span class="ltr">207</span> החבילות אינו מגיע ל-<span class="ltr">keyv</span> באף מסלול. המסלול היחיד למשפחה במכונה הזו הוא
+  <span class="ltr">eslint</span> הגלובלי.
+</div>
+
+<h3>ערכי עדות - זמנים, מחסן ויומנים</h3>
+<ul class="tight">
+  <li><strong>זמן השינוי של עץ <span class="ltr">node_modules</span> העדכני ביותר:</strong>
+      <span class="ltr">2026-03-31 13:37:24 UTC</span> (<span class="ltr">@anthropic-ai/claude-code</span>).
+      כל שאר העץ הגלובלי נכתב ב-<span class="ltr">2026-03-31 13:31</span>. אין אף עץ שנכתב בחלון התקיפה.</li>
+  <li><strong>קובץ נעילה שנכתב בחלון:</strong> אין.
+      <span class="ltr">pnpm-lock.yaml</span> נושא זמן <span class="ltr">2026-08-10 14:11:49 UTC</span> - שעת השבטוט של המכולה, כמוסבר בסעיף שנשלל.</li>
+  <li><strong>מחסן <span class="ltr">npm</span> (<span class="ltr">126MB</span>, <span class="ltr">226</span> מדפי אינדקס):</strong>
+      החבילות היחידות מהמשפחה שהורדו אי פעם אל המכונה הזו הן
+      <span class="ltr">keyv-4.5.4.tgz</span>, <span class="ltr">flat-cache-4.0.1.tgz</span>, <span class="ltr">file-entry-cache-8.0.0.tgz</span>.
+      <strong>אף חבילה זדונית לא הורדה מעולם.</strong> זו העדות הישירה החזקה ביותר בדוח.</li>
+  <li><strong>יומני <span class="ltr">npm</span>:</strong> נקראו <strong>ראשונים</strong>, לפני כל פקודת <span class="ltr">npm</span>, כפי שהנוהל מחייב.
+      קיימים <span class="ltr">7</span> יומנים, כולם מ-<span class="ltr">2026-03-31</span>.
+      <span class="ltr">7</span> קטן מ-<span class="ltr">logs-max</span> שהוא <span class="ltr">10</span>, ולכן <strong>לא אבד אף יומן לסבב רוטציה</strong>.
+      <strong>אין אף רשומת יומן בחלון התקיפה.</strong> שורות ה-<span class="ltr">argv</span> במלואן:</li>
+</ul>
+<div class="scroll">
+<table>
+  <thead><tr><th>חותמת זמן</th><th>שורת <span class="ltr">argv</span></th></tr></thead>
+  <tbody>
+    <tr><td><span class="ltr">2026-03-31T13:31:07Z</span></td><td class="mono">install --global yarn@latest</td></tr>
+    <tr><td><span class="ltr">2026-03-31T13:31:09Z</span></td><td class="mono">bin --global</td></tr>
+    <tr><td><span class="ltr">2026-03-31T13:31:09Z</span></td><td class="mono">install --global pnpm@latest</td></tr>
+    <tr><td><span class="ltr">2026-03-31T13:31:10Z</span></td><td class="mono">install --global eslint http-server nodemon prettier serve ts-node typescript playwright@1.56</td></tr>
+    <tr><td><span class="ltr">2026-03-31T13:31:14Z</span></td><td class="mono">install --global chromedriver</td></tr>
+    <tr><td><span class="ltr">2026-03-31T13:31:16Z</span></td><td class="mono">exec -- playwright@1.56 install-deps chromium</td></tr>
+    <tr><td><span class="ltr">2026-03-31T13:31:25Z</span></td><td class="mono">exec -- playwright@1.56 install chromium</td></tr>
+  </tbody>
+</table>
+</div>
+<ul class="tight">
+  <li><strong>היסטוריית מעטפת:</strong> <span class="ltr">~/.bash_history</span>, <span class="ltr">~/.zsh_history</span> ו-<span class="ltr">fish_history</span>
+      <strong>אינם קיימים כלל</strong>, ו-<span class="ltr">HISTTIMEFORMAT</span> אינו מוגדר.
+      לכן <strong>לא ניתן לתארך פקודות התקנה מתוך היסטוריית המעטפת במכונה הזו</strong> - אין היסטוריה כלל, לא כל שכן חותמות זמן.
+      התיארוך בדוח נשען על יומני <span class="ltr">npm</span>, זמני שינוי של קבצים, והמחסן.</li>
+</ul>
+
+<h3>מצאי מאגרים</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>ארגון / חשבון</th><th>פלטפורמה</th><th>שיטת הזדהות</th><th>נגישים</th><th>נסרקו</th><th>כיסוי</th><th>שיוך</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="ltr">GdarmonAbra</span> (חשבון פרטי, לא ארגון)</td>
+      <td><span class="ltr">GitHub</span></td>
+      <td>מחבר <span class="ltr">GitHub MCP</span> בסביבה הנוכחית (דרג <span class="ltr">1</span>)</td>
+      <td><span class="ltr">1</span> בהיקף הסשן</td>
+      <td><span class="ltr">1</span></td>
+      <td>מלא בהיקף שהוקצה</td>
+      <td>אברא</td>
+    </tr>
+    <tr>
+      <td><span class="ltr">GdarmonAbra</span> - <span class="ltr">10</span> מאגרים ציבוריים נוספים</td>
+      <td><span class="ltr">GitHub</span></td>
+      <td>מחוץ להיקף הסשן</td>
+      <td><span class="ltr">0</span></td>
+      <td><span class="ltr">0</span></td>
+      <td>לא נסרק</td>
+      <td>אברא (להערכה)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<ul class="tight">
+  <li><strong>דרג הגישה שנפתר:</strong> דרג <span class="ltr">1</span> - מחבר <span class="ltr">GitHub</span> זמין בסביבה הנוכחית. לא נדרשה נפילה לדרגים נמוכים יותר.</li>
+  <li><strong>ארגונים שזוהו ולא הושגה אליהם גישה:</strong> אין. החשבון הוא חשבון משתמש פרטי ואינו חבר בארגון הנגיש לסשן הזה.</li>
+  <li><strong>סביבות לקוח:</strong> לא זוהתה אף סביבת לקוח בהיקף שנסרק. לא נעשה ולא יעשה ניסיון להשיג גישה לסביבת לקוח.</li>
+  <li><strong>מערכות ניהול קוד אחרות:</strong> <span class="ltr">Bitbucket</span>, <span class="ltr">Azure DevOps</span> ושרת ה-<span class="ltr">Gerrit</span> המתארח עצמית לא היו נגישים מסביבה זו ולא נסרקו.</li>
+</ul>
+
+<h3>צינורות <span class="ltr">CI</span></h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>ריצה</th><th>הגדרה</th><th>תאריך</th><th>תוצאה</th><th>התקינה תלויות?</th><th>פקודת ההתקנה המדויקת</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ltr">#1</span></td><td><span class="ltr">ci.yml</span></td><td><span class="ltr">2026-04-24 09:10Z</span></td><td>כשל</td><td>כן</td><td class="mono">pnpm install --frozen-lockfile=false</td></tr>
+    <tr><td><span class="ltr">#2</span></td><td><span class="ltr">ci.yml</span></td><td><span class="ltr">2026-04-24 11:04Z</span></td><td>הצלחה</td><td>כן</td><td class="mono">pnpm install --frozen-lockfile=false</td></tr>
+    <tr><td><span class="ltr">#3</span></td><td><span class="ltr">ci.yml</span></td><td><span class="ltr">2026-04-24 11:09Z</span></td><td>הצלחה</td><td>כן</td><td class="mono">pnpm install --frozen-lockfile=false</td></tr>
+    <tr><td><span class="ltr">#4</span></td><td><span class="ltr">pages.yml</span> (הוסרה מאז)</td><td><span class="ltr">2026-06-02 20:17Z</span></td><td>כשל</td><td>לא נבדק - ההגדרה אינה קיימת עוד בענף ראשי</td><td>-</td></tr>
+  </tbody>
+</table>
+</div>
+<ul class="tight">
+  <li><strong>פלטפורמה:</strong> <span class="ltr">GitHub Actions</span>, פלטפורמה אחת.</li>
+  <li><strong>ריצות בחלון <span class="ltr">2026-08-04</span> עד <span class="ltr">2026-08-06</span>: <span class="ltr">0</span>.</strong>
+      זו התשובה המכריעה של הווקטור. סך כל הריצות בכל חיי המאגר הוא <span class="ltr">4</span>, כולן מחוצה לחלון.</li>
+  <li>לא נמצאו ביומנים <span class="ltr">eth_call</span>, קריאות <span class="ltr">JSON-RPC</span> לנקודות קצה של <span class="ltr">Ethereum</span>,
+      בקשות <span class="ltr">POST</span> לנתיב <span class="ltr">/router</span>, או מגע עם
+      <span class="ltr">npm-cache[.]com</span> / <span class="ltr">awqhnjewqjkl[.]icu</span>.
+      המחרוזות האלה לא נמצאו גם בשום מקום על הדיסק.</li>
+  <li>אף התקנה אינה מופעלת עם <code>--silent</code>, ואף שלב התקנה אינו מוגדר כבלתי חוסם - כלומר עדות ההתקנה אינה מושמדת.</li>
+</ul>
+
+<h3>סיכום קריא-מכונה</h3>
+<div class="summary">
+<pre>CHAINDROP-SUMMARY-V2
+host=vm
+user=root
+os=Ubuntu 24.04.4 LTS (Linux 6.18.5-fc-v20)
+npm=10.9.7
+node=v22.22.2
+projects=1
+repos_scanned=1
+lockfiles=1
+family_versions=keyv@4.5.4;flat-cache@4.0.1;file-entry-cache@8.0.0
+installs_in_window=0
+findings=1
+verdict=FINDINGS
+vectors_not_checked=V6
+END</pre>
+</div>
+<p class="deffn">
+  הערה על השדה <span class="ltr">verdict</span>: הערך <span class="ltr">FINDINGS</span> נרשם משום שנרשם ממצא אחד
+  (<span class="ltr">F-01</span>), ולא משום שאושרה חשיפה. לא נמצאה עדות להדבקה באף וקטור.
+  הכיסוי חלקי, ולכן אילו לא היה ממצא כלל, הערך היה <span class="ltr">CLEAN_PARTIAL_COVERAGE</span> ולא <span class="ltr">CLEAN</span>.
+</p>
+
+<!-- 9. GAPS -->
+<h2>פערים ומגבלות</h2>
+<p>הסעיף הזה חובה גם בתוצאה נקייה. אלה הדברים שלא נבדקו, והסיבה.</p>
+
+<h3>מגבלת ההקשר החשובה ביותר</h3>
+<div class="note">
+  <strong>המכונה שנסרקה אינה עמדת עבודה של אדם.</strong> זו מכולת ענן זמנית
+  (<span class="ltr">Claude Code</span> בסביבה מנוהלת), שהוקמה מתמונה ב-<span class="ltr">2026-03-31</span>,
+  ושבטטה את המאגר מחדש ב-<span class="ltr">2026-08-10</span>. היא נמחקת בתום הסשן.
+  משמעות הדבר: הדוח אינו אומר דבר על הלפטופ של המפעיל, על מכונות אחרות באברא, או על עמדות פיתוח כלשהן.
+  <strong>אין לגלגל את התוצאה הזו לרמת הצי.</strong> כדי לכסות עמדות עבודה יש להריץ את הנוהל על כל עמדה בנפרד.
+</div>
+
+<h3>וקטורים שלא נבדקו</h3>
+<ul class="tight">
+  <li><strong><span class="ltr">V6</span> - ארטיפקטים ארגוניים: לא נבדק, ואינו מדווח כנקי.</strong>
+      ההזדהות נפתרה לחשבון משתמש פרטי (<span class="ltr">GdarmonAbra</span>) ולא לארגון, ולכן אין יומן ביקורת ארגוני,
+      אסימוני <span class="ltr">npm</span> ארגוניים, או אפליקציות <span class="ltr">GitHub</span> ומפתחות פריסה ארגוניים שניתן לבדוק.
+      בנוסף, להזדהות אין הרשאת <span class="ltr">org-admin</span>.
+      <strong>לא ניתן היה לחפש מאגרים ציבוריים עם התיאור <span class="ltr">Shai-Hulud: Here We Go Again</span></strong>
+      מפני שחיפוש כזה חורג מהיקף הסשן, שמוגבל למאגר אחד. זהו פער אמיתי.</li>
+</ul>
+
+<h3>פערי כיסוי נוספים</h3>
+<ul class="tight">
+  <li><span class="ltr">10</span> מתוך <span class="ltr">11</span> המאגרים הציבוריים של החשבון לא נסרקו - הם מחוץ להיקף ההרשאות של הסשן.
+      הסריקה נמנעה במכוון מלגשת אליהם.</li>
+  <li>ריצת ה-<span class="ltr">CI</span> מ-<span class="ltr">2026-06-02</span> (<span class="ltr">pages.yml</span>) התייחסה לענף שאינו קיים עוד,
+      וההגדרה שלו אינה בענף הראשי. לא ניתן היה לאשר איזו פקודת התקנה הריצה. היא מחוץ לחלון התקיפה.</li>
+  <li>יומני <span class="ltr">CI</span> פגי תוקף: יומני הריצות מאפריל ומיוני עשויים להיות כבר מפונים בצד <span class="ltr">GitHub</span>.
+      ההסקה לגבי פקודות ההתקנה נעשתה מהגדרת הצינור כפי שהיא בגרסת הקוד של כל ריצה, ולא מקריאת היומן עצמו.</li>
+  <li>מכונות אחרות באברא, סביבות ספקים וסביבות לקוח - לא נסרקו. סביבות לקוח מטופלות בהודעה ולא בסריקה.</li>
+  <li><span class="ltr">Bitbucket</span>, <span class="ltr">Azure DevOps</span> ו-<span class="ltr">Gerrit</span> המתארח עצמית - לא נגישים מסביבה זו.</li>
+  <li>מכולות ו-<span class="ltr">WSL</span>: אינם רלוונטיים. המכונה עצמה היא מכולת <span class="ltr">Linux</span>, ולא נמצאו בתוכה מכולות מקוננות.</li>
+  <li>נתיבי סנכרון ענן (מגבלה <span class="ltr">6</span>): <strong>לא בוצע חריג</strong>.
+      <span class="ltr">Dropbox</span>, <span class="ltr">OneDrive</span>, <span class="ltr">Google Drive</span> ו-<span class="ltr">~/Library</span>
+      נבדקו כקיימים - ואינם קיימים במכונה. לא נקרא אף קובץ מציין מקום, ולא הופעל אף תהליך הידרציה.</li>
+  <li>התמדה: <span class="ltr">~/.config/systemd/user</span> אינו קיים.
+      לא ניתן היה למנות יחידות <span class="ltr">systemd</span> בעזרת <span class="ltr">systemctl</span> משום ש-<span class="ltr">systemd</span>
+      אינו תהליך <span class="ltr">1</span> במכולה. הבדיקה בוצעה ברמת מערכת הקבצים והושלמה.
+      <span class="ltr">LaunchAgents</span> אינו רלוונטי - זו אינה <span class="ltr">macOS</span>.
+      <span class="ltr">crontab</span> אינו מותקן במכונה.</li>
+</ul>
+
+<h3>הערות על הנוהל עצמו</h3>
+<ul class="tight">
+  <li><strong>מיקום רשימת ה-<span class="ltr">IOC</span> של <span class="ltr">Wiz</span> שונה מהמצוין בנוהל.</strong>
+      הנוהל מפנה ל-<span class="ltr">keyv-packages.csv</span> בשורש <span class="ltr">wiz-sec-public/wiz-research-iocs</span>.
+      הקובץ נמצא בפועל תחת <span class="ltr">reports/keyv-packages.csv</span>.
+      <strong>הרשימה כן הושגה ונקראה</strong> (קריאה בלבד, נתונים ולא כלי הרצה), והיא מכילה
+      <span class="ltr">455</span> חבילות. שש הגרסאות הזדוניות שהנוהל מונה אושרו מולה במדויק:
+      <span class="ltr">keyv@6.0.0</span>, <span class="ltr">flat-cache@6.1.24</span>, <span class="ltr">file-entry-cache@11.1.6</span>,
+      <span class="ltr">cacheable-request@13.0.20</span>, <span class="ltr">cache-manager@7.2.10</span>, <span class="ltr">ecto@5.0.1</span>.
+      מוצע לתקן את הנתיב בגרסה הבאה של הנוהל.</li>
+  <li><strong>מיומן העיצוב <span class="ltr">abra-design</span> אינו מותקן בסביבה זו.</strong>
+      בהתאם להוראה, נעשה שימוש בערכי הצבע שצוינו
+      (<span class="ltr">#fcf9f5</span>, <span class="ltr">#121f3f</span>, <span class="ltr">#ff7748</span>),
+      בגופני מערכת במקום <span class="ltr">Simpler Pro</span>, ובסמל טקסטואלי במקום הלוגו כ-<span class="ltr">data URI</span>.
+      התחלופה מתועדת כאן כנדרש.</li>
+</ul>
+
+<h3>מה שכן ניתן לומר בביטחון</h3>
+<div class="note">
+  בהיקף שנסרק בפועל - מכונה אחת ומאגר אחד - <strong>לא נמצאה עדות לחשיפה ל-ChainDrop</strong>.
+  הניסוח הזה מכוון: הוא אינו אומר שאין חשיפה באברא, אלא שלא נמצאה חשיפה במה שנסרק.
+  שלוש העדויות הישירות שתומכות בו הן הגרסאות המפוענחות בפועל, תוכן מחסן <span class="ltr">npm</span>, והיעדר כל סימני ההיכרות מהדיסק.
+  לא בוצעה כל פעולת תיקון, לא נגענו באף אישור, ולא שונה אף קובץ.
+</div>
+
+<footer>
+  הופק בסריקה אוטומטית לפי נוהל <span class="ltr">ChainDrop keyv scan v2</span>.
+  סריקה לקריאה בלבד: לא הורצה התקנת תלויות, לא הורץ אף קובץ שנמצא, לא הוחלף אף אישור, ולא שונה אף קובץ.
+  התיקון מבוצע על ידי אדם, בסדר הקבוע המופיע בסעיף הפעולות.
+  סיווג: פנימי - אבטחת מידע.
+</footer>
+
+</div>
+</body>
+</html>
